@@ -1,45 +1,92 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
-
+import { Platform, StyleSheet, View } from 'react-native';
 import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import Entypo from '@expo/vector-icons/Entypo';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: 'dark', // Set a static color for active tab
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
+        tabBarInactiveTintColor: 'gray', // Set a static color for inactive tab
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          alignContent: 'center',
+          justifyContent: 'center',
+          paddingTop: 10,
+        },
+      }}
+    >
+      {/* Home Tab */}
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <Entypo name="home" size={24} color={color} />,
         }}
       />
+
+      {/* Add Voucher Tab */}
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Events',
+          tabBarIcon: ({ color }) => <Entypo name="list" size={24} color={color} />,
+        }}
+      />
+
+      {/* Scan Tab */}
+      <Tabs.Screen
+        name="scan"
+        options={{
+          title: 'Scan',
+          tabBarIcon: ({ color }) => (
+            <View style={styles.floatingIcon}>
+              <MaterialCommunityIcons name="qrcode-scan" size={36} color={color} />
+            </View>
+          ),
+        }}
+      />
+
+      {/* Add Voucher Tab */}
+      <Tabs.Screen
+        name="addVoucher"
+        options={{
+          title: 'Add Voucher',
+          tabBarIcon: ({ color }) => <Entypo name="add-to-list" size={24} color={color} />,
+        }}
+      />
+
+      {/* Logout Tab */}
+      <Tabs.Screen
+        name="logout"
+        options={{
+          title: 'Logout',
+          tabBarIcon: ({ color }) => <Entypo name="log-out" size={24} color={color} />,
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  floatingIcon: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    padding: 12   ,
+    width:60,
+    height: 60,
+    elevation: 5, // Add shadow for Android
+    shadowColor: '#000', // Add shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    position: 'absolute',
+    bottom: 8, // Float above the tab bar
+    alignSelf: 'center',
+  },
+});

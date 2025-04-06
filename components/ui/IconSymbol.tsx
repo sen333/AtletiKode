@@ -1,43 +1,46 @@
-// This file is a fallback for using MaterialIcons on Android and web.
-
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { SymbolWeight } from 'expo-symbols';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Entypo from '@expo/vector-icons/Entypo';
 import React from 'react';
 import { OpaqueColorValue, StyleProp, ViewStyle } from 'react-native';
 
-// Add your SFSymbol to MaterialIcons mappings here.
+// Add your SFSymbol to AntDesign/Entypo mappings here.
 const MAPPING = {
-  // See MaterialIcons here: https://icons.expo.fyi
-  // See SF Symbols in the SF Symbols app on Mac.
-  'house.fill': 'home',
-  'paperplane.fill': 'send',
-  'chevron.left.forwardslash.chevron.right': 'code',
-  'chevron.right': 'chevron-right',
-} as Partial<
-  Record<
-    import('expo-symbols').SymbolViewProps['name'],
-    React.ComponentProps<typeof MaterialIcons>['name']
-  >
->;
+  // SF Symbols to AntDesign/Entypo mappings
+  'house.fill': { library: 'AntDesign', name: 'home' },
+  'paperplane.fill': { library: 'AntDesign', name: 'rocket1' },
+  'chevron.left.forwardslash.chevron.right': { library: 'AntDesign', name: 'code' },
+  'chevron.right': { library: 'AntDesign', name: 'right' },
+  'add-to-list': { library: 'Entypo', name: 'add-to-list' }, // Added Entypo mapping
+} as const;
 
 export type IconSymbolName = keyof typeof MAPPING;
 
 /**
- * An icon component that uses native SFSymbols on iOS, and MaterialIcons on Android and web. This ensures a consistent look across platforms, and optimal resource usage.
+ * An icon component that uses AntDesign or Entypo icons as a fallback for SF Symbols.
+ * This ensures a consistent look across platforms.
  *
- * Icon `name`s are based on SFSymbols and require manual mapping to MaterialIcons.
+ * Icon `name`s are based on SF Symbols and require manual mapping to AntDesign/Entypo icons.
  */
 export function IconSymbol({
   name,
   size = 24,
-  color,
+  color = 'White',
   style,
 }: {
   name: IconSymbolName;
   size?: number;
-  color: string | OpaqueColorValue;
+  color?: string | OpaqueColorValue;
   style?: StyleProp<ViewStyle>;
-  weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  const mappedIcon = MAPPING[name];
+
+  if (!mappedIcon) {
+    console.error(`Icon "${name}" is not mapped to an AntDesign or Entypo icon. Please add it to the MAPPING object.`);
+    return null; // Return null if the icon name is not mapped
+  }
+
+  // Dynamically render the appropriate icon component
+  const IconComponent = mappedIcon.library === 'AntDesign' ? AntDesign : Entypo;
+
+  return <IconComponent name={mappedIcon.name} size={size} color={color} style={style} />;
 }

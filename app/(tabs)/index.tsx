@@ -1,74 +1,240 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useEffect } from "react";
+import { View, Text, FlatList, StyleSheet, Image } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  useFonts,
+  Manrope_400Regular,
+  Manrope_700Bold,
+} from "@expo-google-fonts/manrope";
+import * as SplashScreen from "expo-splash-screen";
+import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from "@expo/vector-icons/Feather";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+SplashScreen.preventAutoHideAsync();
 
-export default function HomeScreen() {
+const vouchers = Array(10).fill({
+  id: "ATK-008-2023",
+  recipient: "Kyle Howard Senoy",
+  email: "kyle@example.com",
+  status: "UNCLAIMED",
+});
+
+const Vouchers = () => {
+  const [fontsLoaded] = useFonts({
+    Manrope_400Regular,
+    Manrope_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={styles.container}>
+      {/* Header with Gradient */}
+      <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
+        <View style={styles.headerContent}>
+          <Image
+            source={require("../../assets/images/logo2.png")}
+            style={styles.logo}
+          />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>AtletiKode</Text>
+            <Text style={styles.headerSubtitle}>
+              UP Mindanao Atletika's Voucher Management System
+            </Text>
+          </View>
+        </View>
+      </LinearGradient>
+
+      {/* Distributed Vouchers Heading */}
+      <View style={styles.sectionTitleContainer}>
+        <Text style={styles.sectionTitle}>Distributed Vouchers</Text>
+      </View>
+
+      <View style={styles.horizontalLine} />
+
+      {/* Statistics Section */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statBox}>
+          <Text style={styles.statNumber}>333</Text>
+          <Text style={styles.statLabel}>Unclaimed Vouchers</Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text style={styles.statNumber}>333</Text>
+          <Text style={styles.statLabel}>Claimed Vouchers</Text>
+        </View>
+      </View>
+
+      <View style={styles.horizontalLine} />
+      {/* Table Header */}
+      <View style={styles.tableHeader}>
+        <Text style={styles.tableHeaderText}>Voucher ID</Text>
+        <Text style={styles.tableHeaderText}>Recipient</Text>
+        <Text style={styles.tableHeaderText}>Email</Text>
+        <Text style={styles.tableHeaderText}>Status</Text>
+        <AntDesign
+          name="setting"
+          size={20}
+          color="#13390B"
+          style={styles.tableHeaderIcon}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+
+      <View style={styles.horizontalLine} />
+      {/* Voucher List */}
+      <FlatList
+        data={vouchers}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.tableRow}>
+            <Text style={styles.tableCell}>{item.id}</Text>
+            <Text style={styles.tableCell}>{item.recipient}</Text>
+            <Text style={styles.tableCell}>{item.email}</Text>
+            <Text style={[styles.tableCell, styles.status]}>{item.status}</Text>
+            <Feather
+              name="edit"
+              size={16}
+              color="#13390B"
+              style={styles.tableIcon}
+            />
+          </View>
+        )}
+      />
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: { flex: 1, backgroundColor: "#F8F8F8" },
+  header: {
+    height: 150,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 0,
+    paddingRight: 70,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  logo: {
+    width: 50,
+    height: 50,
+    marginRight: 10,
+  },
+  headerTextContainer: {
+    flexDirection: "column",
+  },
+  headerTitle: {
+    fontSize: 20,
+    color: "#fff",
+    fontWeight: "bold",
+    fontFamily: "Manrope_700Bold",
+    letterSpacing: -0.42,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: "#fff",
+    fontFamily: "Manrope_400Regular",
+    letterSpacing: -0.42,
+  },
+  sectionTitleContainer: {
+    padding: 14,
+    alignSelf: "flex-start",
+    width: "100%",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: "#fff",
+    marginTop: -30,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#13390B",
+    textAlign: "left",
+    marginLeft: 4,
+    fontFamily: "Manrope_700SemiBold",
+    letterSpacing: -0.6,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  statBox: { alignItems: "center" },
+  statNumber: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#13390B",
+    fontFamily: "Manrope_700Bold",
+    letterSpacing: -0.42,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: "#13390B",
+    fontFamily: "Manrope_400Regular",
+    letterSpacing: -0.42,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 8,
+    backgroundColor: "#fff",
+    width: "92%",
+    alignSelf: "center",
+  },
+  tableIcon: {
+    marginLeft: 4,
+  },
+  tableHeaderIcon: {
+    marginLeft: 0,
+  },
+  tableHeaderText: {
+    fontWeight: "bold",
+    fontSize: 14,
+    flex: 1,
+    textAlign: "center",
+    fontFamily: "Manrope_700Bold",
+    letterSpacing: -0.4,
+    color: "#13390B",
+  },
+  tableRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#13390B",
+    width: "92%",
+    alignSelf: "center",
+  },
+  tableCell: {
+    fontSize: 12,
+    flex: 1,
+    textAlign: "center",
+    fontFamily: "Manrope_400Regular",
+    color: "#13390B",
+  },
+  status: {
+    color: "#13390B",
+    fontWeight: "bold",
+    fontFamily: "Manrope_700Bold",
+  },
+  horizontalLine: {
+    height: 1,
+    backgroundColor: "darkgreen",
+    width: "92%",
+    alignSelf: "center",
+    marginVertical: 0,
   },
 });
+
+export default Vouchers;
