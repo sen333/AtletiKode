@@ -9,6 +9,7 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
+import { Dimensions } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -110,11 +111,11 @@ const Vouchers = () => {
     </View>
   );
 };
-
+const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F8F8" },
   header: {
-    height: 150,
+    height: height * 0.2,
     justifyContent: "center",
     alignItems: "center",
     padding: 0,
@@ -125,22 +126,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: {
-    width: 50,
-    height: 50,
+    width: width * 0.12, 
+    height: width * 0.12,
     marginRight: 10,
   },
   headerTextContainer: {
     flexDirection: "column",
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: width * 0.05,
     color: "#fff",
     fontWeight: "bold",
     fontFamily: "Manrope_700Bold",
     letterSpacing: -0.42,
   },
   headerSubtitle: {
-    fontSize: 12,
+    fontSize: width * 0.03,
     color: "#fff",
     fontFamily: "Manrope_400Regular",
     letterSpacing: -0.42,
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     marginTop: -30,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: width * 0.055,
     fontWeight: "bold",
     color: "#13390B",
     textAlign: "left",
@@ -172,14 +173,14 @@ const styles = StyleSheet.create({
   },
   statBox: { alignItems: "center" },
   statNumber: {
-    fontSize: 32,
+    fontSize: width * 0.08,
     fontWeight: "bold",
     color: "#13390B",
     fontFamily: "Manrope_700Bold",
     letterSpacing: -0.42,
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: width * 0.035,
     color: "#13390B",
     fontFamily: "Manrope_400Regular",
     letterSpacing: -0.42,
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
   },
   tableHeaderText: {
     fontWeight: "bold",
-    fontSize: 14,
+    fontSize: width * 0.035,
     flex: 1,
     textAlign: "center",
     fontFamily: "Manrope_700Bold",
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   tableCell: {
-    fontSize: 12,
+    fontSize: width * 0.03,
     flex: 1,
     textAlign: "center",
     fontFamily: "Manrope_400Regular",
