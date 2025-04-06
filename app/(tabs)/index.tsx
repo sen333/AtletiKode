@@ -7,7 +7,7 @@ const Index = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('./list.tsx')}>
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('list')}>
         <Text style={styles.buttonText}>Go to List</Text>
       </TouchableOpacity>
     </View>

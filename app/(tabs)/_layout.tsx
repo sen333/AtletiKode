@@ -21,14 +21,23 @@ export default function TabLayout() {
         },
       }}
     >
-      {/* Home Tab */}
+      {/* Login Tab */}
       <Tabs.Screen
         name="index"
+        options={{
+          href: null, // completely hide from tab bar
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+       {/* Home Tab */}
+       <Tabs.Screen
+        name="list"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <Entypo name="home" size={24} color={color} />,
         }}
       />
+
 
       {/* Add Voucher Tab */}
       <Tabs.Screen
