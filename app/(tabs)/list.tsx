@@ -20,7 +20,7 @@ const vouchers = Array(10).fill({
   status: "UNCLAIMED",
 });
 
-const Vouchers = () => {
+const list = () => {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
@@ -115,11 +115,11 @@ const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F8F8" },
   header: {
-    height: height * 0.2,
+    height: height * 0.14,
     justifyContent: "center",
     alignItems: "center",
     padding: 0,
-    paddingRight: 70,
+    paddingRight: 50,
   },
   headerContent: {
     flexDirection: "row",
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     marginTop: -30,
   },
   sectionTitle: {
-    fontSize: width * 0.055,
+    fontSize: width * 0.05,
     fontWeight: "bold",
     color: "#13390B",
     textAlign: "left",
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   tableCell: {
-    fontSize: width * 0.03,
+    fontSize: width * 0.028,
     flex: 1,
     textAlign: "center",
     fontFamily: "Manrope_400Regular",
@@ -238,4 +238,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Vouchers;
+export default list;

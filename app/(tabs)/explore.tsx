@@ -1,109 +1,195 @@
-import { StyleSheet, Image, Platform } from 'react-native';
+import React, { useEffect } from "react";
+import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  useFonts,
+  Manrope_400Regular,
+  Manrope_700Bold,
+} from "@expo-google-fonts/manrope";
+import * as SplashScreen from "expo-splash-screen";
+import Feather from "@expo/vector-icons/Feather";
+import { Dimensions } from "react-native";
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+SplashScreen.preventAutoHideAsync();
 
-export default function TabTwoScreen() {
+const events = Array.from({ length: 8 }, (_, i) => ({
+  id: `ATK-00${i + 1}`,
+  title: "EVENT TITLE",
+  vouchers: 555,
+}));
+
+const EventCard = ({ event }) => (
+  <View style={styles.card}>
+    <View>
+      <Text style={styles.eventCode}>{event.id}</Text>
+      <Text style={styles.eventTitle}>{event.title}</Text>
+    </View>
+    <View style={styles.rightSection}>
+      <View>
+        <Text style={styles.voucherCount}>{event.vouchers}</Text>
+        <Text style={styles.voucherLabel}>Released Vouchers</Text>
+      </View>
+    </View>
+    <TouchableOpacity>
+      <Feather name="trash-2" size={24} color="gray" style={styles.trashIcon} />
+    </TouchableOpacity>
+  </View>
+);
+
+const explore = () => {
+  const [fontsLoaded] = useFonts({
+    Manrope_400Regular,
+    Manrope_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
-}
+    <View style={styles.container}>
+      {/* Header with Gradient */}
+      <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
+        <View style={styles.headerContent}>
+          <Image
+            source={require("../../assets/images/logo2.png")}
+            style={styles.logo}
+          />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>AtletiKode</Text>
+            <Text style={styles.headerSubtitle}>
+              UP Mindanao Atletika's Voucher Management System
+            </Text>
+          </View>
+        </View>
+      </LinearGradient>
 
+      {/* Distributed Vouchers Heading */}
+      <View style={styles.sectionTitleContainer}>
+        <Text style={styles.sectionTitle}>Event Vouchers</Text>
+      </View>
+
+      <View style={styles.horizontalLine} />
+
+      {/* Event List */}
+      <FlatList
+        data={events}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <EventCard event={item} />}
+      />
+    </View>
+  );
+};
+
+const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: { flex: 1, backgroundColor: "#F8F8F8" },
+  header: {
+    height: height * 0.14,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 0,
+    paddingRight: 50
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logo: {
+    width: width * 0.12,
+    height: width * 0.12,
+    marginRight: 10,
+  },
+  headerTextContainer: {
+    flexDirection: "column",
+  },
+  headerTitle: {
+    fontSize: width * 0.05,
+    color: "#fff",
+    fontWeight: "bold",
+    fontFamily: "Manrope_700Bold",
+    letterSpacing: -0.42,
+  },
+  headerSubtitle: {
+    fontSize: width * 0.03,
+    color: "#fff",
+    fontFamily: "Manrope_400Regular",
+    letterSpacing: -0.42,
+  },
+  sectionTitleContainer: {
+    padding: 14,
+    alignSelf: "flex-start",
+    width: "100%",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: "#fff",
+    marginTop: -30,
+  },
+  sectionTitle: {
+    fontSize: width * 0.05,
+    fontWeight: "bold",
+    color: "#13390B",
+    textAlign: "left",
+    marginLeft: 4,
+    fontFamily: "Manrope_700SemiBold",
+    letterSpacing: -0.6,
+  },
+  horizontalLine: {
+    height: 1,
+    backgroundColor: "darkgreen",
+    width: "92%",
+    alignSelf: "center",
+    marginVertical: 0,
+    marginBottom: 10,
+  },
+  card: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 15,
+    marginBottom: 10,
+    elevation: 3,
+    width: "92%",
+    alignSelf: "center",
+    borderColor: "#13390B",
+    borderWidth: 1,
+  },
+  eventCode: {
+    fontSize: 12,
+    color: "#13390B",
+  },
+  eventTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#13390B",
+  },
+  rightSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  voucherCount: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#13390B",
+    textAlign: "center",
+  },
+  voucherLabel: {
+    fontSize: 10,
+    color: "#13390B",
+    textAlign: "right",
+  },
+  trashIcon: {
+    marginLeft: 10,
   },
 });
+
+export default explore;
