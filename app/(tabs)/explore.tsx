@@ -154,8 +154,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
     borderRadius: 20,
-    padding: 15,
-    marginBottom: 10,
+    padding: width * 0.04, // 4% of screen width
+    marginBottom: width * 0.03, // 3% of screen width
     elevation: 3,
     width: "92%",
     alignSelf: "center",
@@ -163,11 +163,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   eventCode: {
-    fontSize: 12,
+    fontSize: width * 0.03, // 3% of screen width
     color: "#13390B",
   },
   eventTitle: {
-    fontSize: 18,
+    fontSize: width * 0.045, // 4.5% of screen width
     fontWeight: "bold",
     color: "#13390B",
   },
@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   voucherCount: {
-    fontSize: 20,
+    fontSize: width * 0.05, // 5% of screen width
     fontWeight: "bold",
     color: "#13390B",
     textAlign: "center",
   },
   voucherLabel: {
-    fontSize: 10,
+    fontSize: width * 0.025, // 2.5% of screen width
     color: "#13390B",
     textAlign: "right",
   },
