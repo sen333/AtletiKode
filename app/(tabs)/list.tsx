@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, Image } from "react-native";
+import { View, Text, FlatList, StyleSheet, Image, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   useFonts,
@@ -9,7 +9,9 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
-import { Dimensions } from "react-native";
+import { useRouter } from "expo-router";
+import { router } from "expo-router";
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -21,6 +23,7 @@ const vouchers = Array(10).fill({
 });
 
 const list = () => {
+  const router = useRouter(); 
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
@@ -74,6 +77,7 @@ const list = () => {
       </View>
 
       <View style={styles.horizontalLine} />
+
       {/* Table Header */}
       <View style={styles.tableHeader}>
         <Text style={styles.tableHeaderText}>Voucher ID</Text>
@@ -89,6 +93,7 @@ const list = () => {
       </View>
 
       <View style={styles.horizontalLine} />
+
       {/* Voucher List */}
       <FlatList
         data={vouchers}
@@ -104,6 +109,17 @@ const list = () => {
               size={16}
               color="#13390B"
               style={styles.tableIcon}
+              onPress={() =>
+                router.push({
+                  pathname: "/editVoucher",
+                  params: {
+                    id: item.id,
+                    recipient: item.recipient,
+                    email: item.email,
+                    status: item.status,
+                  },
+                })
+              }
             />
           </View>
         )}
@@ -111,6 +127,7 @@ const list = () => {
     </View>
   );
 };
+
 const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F8F8" },
@@ -126,7 +143,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   logo: {
-    width: width * 0.12, 
+    width: width * 0.12,
     height: width * 0.12,
     marginRight: 10,
   },
@@ -161,7 +178,7 @@ const styles = StyleSheet.create({
     color: "#13390B",
     textAlign: "left",
     marginLeft: 4,
-    fontFamily: "Manrope_700SemiBold",
+    fontFamily: "Manrope_700Bold",
     letterSpacing: -0.6,
   },
   statsContainer: {

@@ -78,7 +78,17 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Entypo name="log-out" size={24} color={color} />,
         }}
       />
+
+      <Tabs.Screen
+        name="editVoucher"
+        options={{
+          href: null, // completely hide from tab bar
+        }}
+      />
     </Tabs>
+
+
+    
   );
 }
 
