@@ -82,7 +82,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="editVoucher"
         options={{
-          href: null, // completely hide from tab bar
+          href: null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="reviewVoucher"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
