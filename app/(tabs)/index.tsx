@@ -1,11 +1,22 @@
 import React, { useState } from "react";
-import { StatusBar, View, Text, TextInput, TouchableOpacity, Image, StyleSheet, ScrollView } from "react-native";
-import { useNavigation } from '@react-navigation/native'; // Add this import
+import { 
+  StatusBar, 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  Image, 
+  StyleSheet, 
+  ScrollView,
+  Switch
+} from "react-native";
+import { useNavigation } from '@react-navigation/native';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const navigation = useNavigation(); // Initialize navigation
+  const [rememberMe, setRememberMe] = useState(false); // Visual-only state
+  const navigation = useNavigation();
 
   const handleLogin = () => {
     console.log("Logging in with:", { username, password });
@@ -42,9 +53,21 @@ const LoginScreen = () => {
               value={password}
               onChangeText={setPassword}
             />
+            
+            {/* Visual-only Remember Me checkbox */}
+            <View style={styles.rememberMeContainer}>
+              <Switch
+                value={rememberMe}
+                onValueChange={setRememberMe}
+                trackColor={{ false: "#767577", true: "#63120E" }}
+                thumbColor={rememberMe ? "#fff" : "#f4f3f4"}
+              />
+              <Text style={styles.rememberMeText}>Remember Me</Text>
+            </View>
+
             <TouchableOpacity 
               style={styles.button} 
-              onPress={handleLogin} // This will now navigate to the list screen
+              onPress={handleLogin}
             >
               <Text style={styles.buttonText}>Log in as Atletika Admin</Text>
             </TouchableOpacity>
@@ -85,11 +108,10 @@ const styles = StyleSheet.create({
   logo: {
     width: 110,
     height: 110,
-    marginBottom: 10,
   },
   title: {
     fontSize: 24,
-    fontFamily: "Oswald-Bold",
+    fontFamily: "Manrope_700Bold",
     color: "#FFF",
   },
   subtitle: {
@@ -111,16 +133,17 @@ const styles = StyleSheet.create({
   },
   loginTitle: {
     fontSize: 20,
-    fontFamily: "Oswald-Bold",
+    fontFamily: "Manrope_700Bold",
     color: "#5C0000",
   },
   loginSubtitle: {
     fontSize: 14,
-    fontFamily: "Oswald-Regular",
+    fontFamily: "Manrope_400Regular",
     color: "#5C0000",
     marginBottom: 20,
   },
   label: {
+    fontFamily: "Manrope_400Regular",
     alignSelf: "flex-start",
     fontSize: 14,
     color: "#63120E",
@@ -142,12 +165,26 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: "100%",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 40,
   },
   buttonText: {
+    fontFamily: "Manrope_400Regular",
     color: "#FFF",
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: "bold",
+  },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+    marginBottom: 10,
+    alignSelf: 'flex-start',
+  },
+  rememberMeText: {
+    fontFamily: "Manrope_400Regular",
+    color: "#63120E",
+    fontSize: 14,
+    marginLeft: 10,
   },
 });
 
