@@ -29,8 +29,9 @@ const EditVoucher = () => {
     }
   }, [fontsLoaded]);
 
-  if (!fontsLoaded) return null;
-
+  if (!fontsLoaded) {
+    return null;
+  }
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.42,
   },
   formContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: "#F2F2F2",
     marginTop: -30,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
     fontSize: width * 0.029,
     color: "#555",
     fontFamily: "Manrope_400Regular",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   label: {
     fontSize: width * 0.032,
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   input: {
-    backgroundColor: "#F2F2F2",
+    backgroundColor: "#FFF",
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 8,
