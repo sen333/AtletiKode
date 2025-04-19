@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, Image, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   useFonts,
@@ -7,44 +7,22 @@ import {
   Manrope_700Bold,
 } from "@expo-google-fonts/manrope";
 import * as SplashScreen from "expo-splash-screen";
-import Feather from "@expo/vector-icons/Feather";
-import { Dimensions } from "react-native";
+import LottieView from "lottie-react-native";
 
-SplashScreen.preventAutoHideAsync();
-
-const events = Array.from({ length: 8 }, (_, i) => ({
-  id: `ATK-00${i + 1}`,
-  title: "EVENT TITLE",
-  vouchers: 555,
-}));
-
-const EventCard = ({ event }) => (
-  <View style={styles.card}>
-    <View>
-      <Text style={styles.eventCode}>{event.id}</Text>
-      <Text style={styles.eventTitle}>{event.title}</Text>
-    </View>
-    <View style={styles.rightSection}>
-      <View>
-        <Text style={styles.voucherCount}>{event.vouchers}</Text>
-        <Text style={styles.voucherLabel}>Released Vouchers</Text>
-      </View>
-    </View>
-    <TouchableOpacity>
-      <Feather name="trash-2" size={24} color="gray" style={styles.trashIcon} />
-    </TouchableOpacity>
-  </View>
-);
-
-const explore = () => {
+const generateVoucher = () => {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 3000);
     }
   }, [fontsLoaded]);
 
@@ -54,7 +32,7 @@ const explore = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header with Gradient */}
+      {/* Header */}
       <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
         <View style={styles.headerContent}>
           <Image
@@ -70,19 +48,37 @@ const explore = () => {
         </View>
       </LinearGradient>
 
-      {/* Distributed Vouchers Heading */}
+      {/* Title */}
       <View style={styles.sectionTitleContainer}>
-        <Text style={styles.sectionTitle}>Event Vouchers</Text>
+        <Text style={styles.sectionTitle}>Generate New Voucher</Text>
       </View>
 
       <View style={styles.horizontalLine} />
 
-      {/* Event List */}
-      <FlatList
-        data={events}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <EventCard event={item} />}
-      />
+      {/* Animation */}
+      <View style={styles.loadingContainer}>
+        {isLoading ? (
+          <>
+            <LottieView
+              source={require("../../assets/animations/dots-loader.json")} // Your animation file here
+              autoPlay
+              loop
+              style={{ width: 120, height: 120 }}
+            />
+            <Text style={styles.loadingText}>Generating Voucher... Please wait a moment...</Text>
+          </>
+        ) : (
+          <>
+            <LottieView
+              source={require("../../assets/animations/check-success.json")} // Your checkmark animation
+              autoPlay
+              loop={false}
+              style={{ width: 120, height: 120 }}
+            />
+            <Text style={styles.loadingText}>Voucher Generated Successfully!</Text>
+          </>
+        )}
+      </View>
     </View>
   );
 };
@@ -94,8 +90,7 @@ const styles = StyleSheet.create({
     height: height * 0.14,
     justifyContent: "center",
     alignItems: "center",
-    padding: 0,
-    paddingRight: 50
+    paddingRight: 50,
   },
   headerContent: {
     flexDirection: "row",
@@ -124,7 +119,6 @@ const styles = StyleSheet.create({
   },
   sectionTitleContainer: {
     padding: 14,
-    alignSelf: "flex-start",
     width: "100%",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -135,9 +129,8 @@ const styles = StyleSheet.create({
     fontSize: width * 0.05,
     fontWeight: "bold",
     color: "#13390B",
-    textAlign: "left",
     marginLeft: 4,
-    fontFamily: "Manrope_700SemiBold",
+    fontFamily: "Manrope_700Bold",
     letterSpacing: -0.6,
   },
   horizontalLine: {
@@ -145,51 +138,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#13390B",
     width: "92%",
     alignSelf: "center",
-    marginVertical: 0,
     marginBottom: 10,
   },
-  card: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  loadingContainer: {
+    marginTop: 20,
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: width * 0.04, // 4% of screen width
-    marginBottom: width * 0.03, // 3% of screen width
-    elevation: 3,
-    width: "92%",
-    alignSelf: "center",
-    borderColor: "#13390B",
-    borderWidth: 1,
   },
-  eventCode: {
-    fontSize: width * 0.03, // 3% of screen width
-    color: "#13390B",
-  },
-  eventTitle: {
-    fontSize: width * 0.045, // 4.5% of screen width
-    fontWeight: "bold",
-    color: "#13390B",
-  },
-  rightSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  voucherCount: {
-    fontSize: width * 0.05, // 5% of screen width
-    fontWeight: "bold",
-    color: "#13390B",
-    textAlign: "center",
-  },
-  voucherLabel: {
-    fontSize: width * 0.025, // 2.5% of screen width
-    color: "#13390B",
-    textAlign: "right",
-  },
-  trashIcon: {
-    marginLeft: 10,
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#63120E",
+    fontFamily: "Manrope_700Bold",
   },
 });
 
-export default explore;
+export default generateVoucher;

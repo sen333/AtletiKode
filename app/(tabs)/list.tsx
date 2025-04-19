@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   horizontalLine: {
     height: 1,
-    backgroundColor: "darkgreen",
+    backgroundColor: "#13390B",
     width: "92%",
     alignSelf: "center",
     marginVertical: 0,

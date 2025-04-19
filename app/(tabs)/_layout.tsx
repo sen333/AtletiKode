@@ -85,6 +85,12 @@ export default function TabLayout() {
           href: null, // completely hide from tab bar
         }}
       />
+      <Tabs.Screen
+        name="generateVoucher"
+        options={{
+          href: null, // completely hide from tab bar
+        }}
+      />
     </Tabs>
 
 
