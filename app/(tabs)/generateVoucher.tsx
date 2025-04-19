@@ -22,7 +22,7 @@ const generateVoucher = () => {
       SplashScreen.hideAsync();
       setTimeout(() => {
         setIsLoading(false);
-      }, 3000);
+      }, 4000);
     }
   }, [fontsLoaded]);
 
@@ -63,9 +63,14 @@ const generateVoucher = () => {
               source={require("../../assets/animations/dots-loader.json")} // Your animation file here
               autoPlay
               loop
-              style={{ width: 120, height: 120 }}
+              style={{
+                width: width * 0.3, // 30% of screen width
+                height: width * 0.3, // Keep it square
+              }}
             />
-            <Text style={styles.loadingText}>Generating Voucher... Please wait a moment...</Text>
+            <Text style={[styles.loadingText, { fontSize: width * 0.04 }]}>
+              Generating Voucher. Please Wait.
+            </Text>
           </>
         ) : (
           <>
@@ -73,9 +78,14 @@ const generateVoucher = () => {
               source={require("../../assets/animations/check-success.json")} // Your checkmark animation
               autoPlay
               loop={false}
-              style={{ width: 120, height: 120 }}
+              style={{
+                width: width * 0.3, // 30% of screen width
+                height: width * 0.3, // Keep it square
+              }}
             />
-            <Text style={styles.loadingText}>Voucher Generated Successfully!</Text>
+            <Text style={[styles.loadingText, { fontSize: width * 0.04 }]}>
+              Voucher Generated Successfully!
+            </Text>
           </>
         )}
       </View>
@@ -141,13 +151,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   loadingContainer: {
-    marginTop: 20,
+    margin: 0,
     alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
   },
   loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#63120E",
+    marginTop: 16,
+    color: "#13390B",
     fontFamily: "Manrope_700Bold",
   },
 });
