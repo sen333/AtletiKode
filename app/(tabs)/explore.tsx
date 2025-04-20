@@ -1,5 +1,12 @@
 import React, { useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   useFonts,
@@ -95,7 +102,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 0,
-    paddingRight: 50
+    paddingRight: 50,
   },
   headerContent: {
     flexDirection: "row",
@@ -128,7 +135,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    backgroundColor: "#fff",
+    backgroundColor: "#F8F8F8",
     marginTop: -30,
   },
   sectionTitle: {
@@ -137,7 +144,7 @@ const styles = StyleSheet.create({
     color: "#13390B",
     textAlign: "left",
     marginLeft: 4,
-    fontFamily: "Manrope_700SemiBold",
+    fontFamily: "Manrope_700Bold",
     letterSpacing: -0.6,
   },
   horizontalLine: {

@@ -1,5 +1,13 @@
 import React, { useEffect, useLayoutEffect } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "expo-router";
 import {
@@ -49,12 +57,19 @@ const EditVoucher = () => {
         </View>
       </LinearGradient>
 
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>Update Existing Vouchers</Text>
-        <View style={styles.horizontalLine} />
-        
-        <Text style={styles.subtitle}>Edit the information for this generated voucher</Text>
+      <View style={styles.sectionTitleContainer}>
+        <Text style={styles.sectionTitle}>Update Existing Vouchers</Text>
+      </View>
 
+      <View style={styles.horizontalLine} />
+
+      <View style={styles.subtitleTitleContainer}>
+        <Text style={styles.subtitle}>
+          Edit the information for this generated voucher.
+        </Text>
+      </View>
+
+      <View style={styles.formContainer}>
         <Text style={styles.label}>Recipient’s First Name:</Text>
         <TextInput
           style={styles.input}
@@ -91,7 +106,9 @@ const EditVoucher = () => {
         />
 
         <TouchableOpacity style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Save and Update Voucher Details</Text>
+          <Text style={styles.saveButtonText}>
+            Save and Update Voucher Details
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.deleteButton}>
@@ -142,25 +159,19 @@ const styles = StyleSheet.create({
     letterSpacing: -0.42,
   },
   formContainer: {
-    backgroundColor: "#F2F2F2",
+    backgroundColor: "#F8F8F8",
     marginTop: -30,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     padding: 20,
     paddingBottom: 60,
   },
-  title: {
-    fontSize: width * 0.048,
-    color: "#13390B",
-    fontWeight: "bold",
-    fontFamily: "Manrope_700Bold",
-    marginBottom: 8,
-  },
   subtitle: {
     fontSize: width * 0.029,
-    color: "#555",
+    color: "#13390B",
     fontFamily: "Manrope_400Regular",
     marginBottom: 10,
+    marginLeft: 8,
   },
   label: {
     fontSize: width * 0.032,
@@ -206,11 +217,31 @@ const styles = StyleSheet.create({
   horizontalLine: {
     height: 1,
     backgroundColor: "#13390B",
-    width: "100%",
+    width: "92%",
     alignSelf: "center",
     marginVertical: 0,
   },
-
+  sectionTitleContainer: {
+    padding: 14,
+    width: "100%",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: "#F8F8F8",
+    marginTop: -30,
+  },
+  sectionTitle: {
+    fontSize: width * 0.05,
+    fontWeight: "bold",
+    color: "#13390B",
+    marginLeft: 4,
+    fontFamily: "Manrope_700Bold",
+    letterSpacing: -0.6,
+  },
+  subtitleTitleContainer: {
+    marginBottom: 20,
+    marginLeft: 9.8,
+    backgroundColor: "#F8F8F8",
+  },
 });
 
 export default EditVoucher;

@@ -1,5 +1,12 @@
 import React, { useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, Image, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Image,
+  Dimensions,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   useFonts,
@@ -12,7 +19,6 @@ import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
 import { router } from "expo-router";
 
-
 SplashScreen.preventAutoHideAsync();
 
 const vouchers = Array(10).fill({
@@ -23,7 +29,7 @@ const vouchers = Array(10).fill({
 });
 
 const list = () => {
-  const router = useRouter(); 
+  const router = useRouter();
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
@@ -169,7 +175,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    backgroundColor: "#fff",
+    backgroundColor: "#F8F8F8",
     marginTop: -30,
   },
   sectionTitle: {
@@ -188,7 +194,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
-  statBox: { alignItems: "center" },
+  statBox: { alignItems: "center", backgroundColor: "#F8F8F8" },
   statNumber: {
     fontSize: width * 0.08,
     fontWeight: "bold",
@@ -206,7 +212,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     padding: 8,
-    backgroundColor: "#fff",
+    backgroundColor: "#F8F8F8",
     width: "92%",
     alignSelf: "center",
   },

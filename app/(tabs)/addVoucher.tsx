@@ -1,5 +1,13 @@
 import React, { useEffect, useLayoutEffect, useState } from "react";
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native"; // Updated import
 import {
@@ -18,15 +26,15 @@ const addVoucher = () => {
   });
 
   const navigation = useNavigation();
-  
+
   // State to store form data
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: '',
-    discount: '',
-    voucherCode: ''
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    discount: "",
+    voucherCode: "",
   });
 
   useLayoutEffect(() => {
@@ -40,15 +48,15 @@ const addVoucher = () => {
   }, [fontsLoaded]);
 
   const handleGenerateVoucher = () => {
-    navigation.navigate('reviewVoucher', { 
-      voucherData: formData 
+    navigation.navigate("reviewVoucher", {
+      voucherData: formData,
     });
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -70,20 +78,28 @@ const addVoucher = () => {
           </View>
         </View>
       </LinearGradient>
-    
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>Generate New Voucher</Text>
-        <View style={styles.horizontalLine} />
-        
-        <Text style={styles.subtitle}>Enter the required information for the voucher. Make sure to fill it out correctly.</Text>
 
+      <View style={styles.sectionTitleContainer}>
+        <Text style={styles.sectionTitle}>Generate New Voucher</Text>
+      </View>
+
+      <View style={styles.horizontalLine} />
+
+      <View style={styles.subtitleTitleContainer}>
+        <Text style={styles.subtitle}>
+          Enter the required information for the voucher. Make sure to fill it
+          out correctly.
+        </Text>
+      </View>
+
+      <View style={styles.formContainer}>
         <Text style={styles.label}>Recipient's First Name:</Text>
         <TextInput
           style={styles.input}
           placeholder="Enter first name"
           placeholderTextColor="#999"
           value={formData.firstName}
-          onChangeText={(text) => handleInputChange('firstName', text)}
+          onChangeText={(text) => handleInputChange("firstName", text)}
         />
 
         <Text style={styles.label}>Recipient's Last Name:</Text>
@@ -92,7 +108,7 @@ const addVoucher = () => {
           placeholder="Enter last name"
           placeholderTextColor="#999"
           value={formData.lastName}
-          onChangeText={(text) => handleInputChange('lastName', text)}
+          onChangeText={(text) => handleInputChange("lastName", text)}
         />
 
         <Text style={styles.label}>Recipient's Email Address:</Text>
@@ -101,7 +117,7 @@ const addVoucher = () => {
           placeholder="Enter email address"
           placeholderTextColor="#999"
           value={formData.email}
-          onChangeText={(text) => handleInputChange('email', text)}
+          onChangeText={(text) => handleInputChange("email", text)}
           keyboardType="email-address"
         />
 
@@ -111,7 +127,7 @@ const addVoucher = () => {
           placeholder="Enter phone number"
           placeholderTextColor="#999"
           value={formData.phoneNumber}
-          onChangeText={(text) => handleInputChange('phoneNumber', text)}
+          onChangeText={(text) => handleInputChange("phoneNumber", text)}
           keyboardType="phone-pad"
         />
 
@@ -121,7 +137,7 @@ const addVoucher = () => {
           placeholder="Enter discount (e.g. 20%)"
           placeholderTextColor="#999"
           value={formData.discount}
-          onChangeText={(text) => handleInputChange('discount', text)}
+          onChangeText={(text) => handleInputChange("discount", text)}
         />
 
         <Text style={styles.label}>Atletika Event Voucher Code (ATK-XXX):</Text>
@@ -130,10 +146,10 @@ const addVoucher = () => {
           placeholder="Enter the event's voucher code"
           placeholderTextColor="#999"
           value={formData.voucherCode}
-          onChangeText={(text) => handleInputChange('voucherCode', text)}
+          onChangeText={(text) => handleInputChange("voucherCode", text)}
         />
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.generateButton}
           onPress={handleGenerateVoucher}
         >
@@ -149,7 +165,7 @@ const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F8F8F8",
   },
   header: {
     height: height * 0.14,
@@ -184,25 +200,24 @@ const styles = StyleSheet.create({
     letterSpacing: -0.42,
   },
   formContainer: {
-    backgroundColor: "#F2F2F2",
-    marginTop: -30,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    backgroundColor: "#F8F8F8",
+    marginTop: -10,
     padding: 20,
     paddingBottom: 60,
+    alignSelf: "center",
+    width: "100%",
   },
-  title: {
-    fontSize: width * 0.048,
-    color: "#13390B",
-    fontWeight: "bold",
-    fontFamily: "Manrope_700Bold",
-    marginBottom: 8,
+  subtitleTitleContainer: {
+    marginBottom: 14,
+    marginLeft: 9.8,
+    backgroundColor: "#F8F8F8",
   },
   subtitle: {
     fontSize: width * 0.029,
-    color: "#555",
+    color: "#13390B",
     fontFamily: "Manrope_400Regular",
-    marginBottom: 5,
+    marginRight: 30,
+    alignSelf: "center",
   },
   label: {
     fontSize: width * 0.032,
@@ -234,13 +249,27 @@ const styles = StyleSheet.create({
   },
   horizontalLine: {
     height: 1,
-    backgroundColor: "darkgreen",
-    width: "100%",
+    backgroundColor: "#13390B",
+    width: "92%",
     alignSelf: "center",
     marginVertical: 0,
   },
-
+  sectionTitleContainer: {
+    padding: 14,
+    width: "100%",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: "#F8F8F8",
+    marginTop: -30,
+  },
+  sectionTitle: {
+    fontSize: width * 0.05,
+    fontWeight: "bold",
+    color: "#13390B",
+    marginLeft: 4,
+    fontFamily: "Manrope_700Bold",
+    letterSpacing: -0.6,
+  },
 });
 
-
-export default addVoucher
+export default addVoucher;

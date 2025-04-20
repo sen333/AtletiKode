@@ -55,6 +55,10 @@ const generateVoucher = () => {
 
       <View style={styles.horizontalLine} />
 
+      <Text style={styles.subtitle}>
+        Generating the voucher and sending it to the recipient's email.
+      </Text>
+
       {/* Animation */}
       <View style={styles.loadingContainer}>
         {isLoading ? (
@@ -132,7 +136,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    backgroundColor: "#fff",
+    backgroundColor: "#F8F8F8",
     marginTop: -30,
   },
   sectionTitle: {
@@ -148,7 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#13390B",
     width: "92%",
     alignSelf: "center",
-    marginBottom: 10,
+    marginBottom: 2,
   },
   loadingContainer: {
     margin: 0,
@@ -160,6 +164,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     color: "#13390B",
     fontFamily: "Manrope_700Bold",
+  },
+  subtitle: {
+    fontSize: width * 0.029,
+    color: "#13390B",
+    fontFamily: "Manrope_400Regular",
+    marginBottom: 5,
+    alignSelf: "center",
+    marginRight: 40,
   },
 });
 

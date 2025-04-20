@@ -1,5 +1,12 @@
 import React, { useEffect, useLayoutEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native"; // Import navigation hook
 import {
@@ -48,12 +55,17 @@ const ReviewVoucher = () => {
           </View>
         </View>
       </LinearGradient>
+      <View style={styles.sectionTitleContainer}>
+        <Text style={styles.sectionTitle}>Generate New Voucher</Text>
+      </View>
+
+      <View style={styles.horizontalLine} />
+
+      <View style={styles.subtitleTitleContainer}>
+        <Text style={styles.subtitle}>Review the following information.</Text>
+      </View>
+
       <View style={styles.reviewContainer}>
-        <Text style={styles.title}>Review Voucher</Text>
-        <View style={styles.horizontalLine} />
-
-        <Text style={styles.subtitle}>Review the following information</Text>
-
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>Recipient’s First Name: </Text>
           <Text style={styles.infoSubtext}>{voucherData.firstName} </Text>
@@ -75,7 +87,8 @@ const ReviewVoucher = () => {
         </View>
 
         <Text style={styles.reviewReminder}>
-          The presented information will be saved when you generate this voucher.
+          The presented information will be saved when you generate this
+          voucher.
         </Text>
 
         {/* Navigate to generateVoucher */}
@@ -130,32 +143,27 @@ const styles = StyleSheet.create({
     letterSpacing: -0.42,
   },
   reviewContainer: {
-    backgroundColor: "#F2F2F2",
-    marginTop: -30,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    marginTop: 8,
     padding: 20,
     paddingBottom: 150,
   },
-  title: {
-    fontSize: width * 0.048,
-    color: "#13390B",
-    fontWeight: "bold",
-    fontFamily: "Manrope_700Bold",
-    marginBottom: 8,
-  },
   horizontalLine: {
     height: 1,
-    backgroundColor: "darkgreen",
-    width: "100%",
+    backgroundColor: "#13390B",
+    width: "92%",
     alignSelf: "center",
     marginVertical: 0,
   },
+  subtitleTitleContainer: {
+    marginBottom: 4,
+    marginLeft: 9.8,
+    backgroundColor: "#F8F8F8",
+  },
   subtitle: {
     fontSize: width * 0.029,
-    color: "#555",
+    color: "#13390B",
     fontFamily: "Manrope_400Regular",
-    marginBottom: 10,
+    marginLeft: 9.8,
   },
   infoContainer: {
     backgroundColor: "#fff",
@@ -196,6 +204,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Manrope_700Bold",
     fontSize: width * 0.035,
+  },
+  sectionTitleContainer: {
+    padding: 14,
+    width: "100%",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: "#F8F8F8",
+    marginTop: -30,
+  },
+  sectionTitle: {
+    fontSize: width * 0.05,
+    fontWeight: "bold",
+    color: "#13390B",
+    marginLeft: 4,
+    fontFamily: "Manrope_700Bold",
+    letterSpacing: -0.6,
   },
 });
 
