@@ -8,19 +8,34 @@ import {
   Image, 
   StyleSheet, 
   ScrollView,
+  Alert,
   Switch
 } from "react-native";
 import { useNavigation } from '@react-navigation/native';
+import { supabase } from '../lib/supabase';
 
 const LoginScreen = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false); // Visual-only state
   const navigation = useNavigation();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    setLoading(true);
     console.log("Logging in with:", { username, password });
-    navigation.navigate('list'); 
+    const { error } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password
+    });
+    setLoading(false);
+    if (error) {
+        Alert.alert(error.message);
+    }
+    else {
+        navigation.navigate('list'); 
+    }
+    
   };
 
   return (
