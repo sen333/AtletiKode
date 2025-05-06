@@ -18,6 +18,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
 import { router } from "expo-router";
+import { supabase } from "../lib/supabase";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,7 +36,46 @@ const list = () => {
     Manrope_700Bold,
   });
 
+  async function fetchData() {
+    // Fetch voucher data
+    let { data: releasedvouchers, error } = await supabase
+        .from('ReleasedVoucher')
+        .select('Status');
+
+    if (error) {
+        console.log("Error fetching vouchers: " + error.message);
+        return;
+    }
+
+    console.log("Vouchers fetched successfully:", releasedvouchers);
+
+    let { data: personalInfos, error1 } = await supabase
+        .from('Customers')
+        .select('FirstName, LastName, Email, ContactNumber');
+
+    if (error) {
+        console.log("Error fetching vouchers: " + error1.message);
+        return;
+    }
+
+    console.log("Vouchers fetched successfully:", personalInfos);
+
+    let { data: voucher, error2 } = await supabase
+        .from('Vouchers')
+        .select('id');
+
+    if (error) {
+        console.log("Error fetching vouchers: " + error2.message);
+        return;
+    }
+
+    console.log("Vouchers fetched successfully:", voucher);
+    
+  }
+
   useEffect(() => {
+    fetchData();
+
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
