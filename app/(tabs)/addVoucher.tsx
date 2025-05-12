@@ -51,6 +51,7 @@ const addVoucher = () => {
     navigation.navigate("reviewVoucher", {
       voucherData: formData,
     });
+
   };
 
   const handleInputChange = (field: string, value: string) => {

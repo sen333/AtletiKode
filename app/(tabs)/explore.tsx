@@ -19,7 +19,7 @@ import { Dimensions } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
-const events = Array.from({ length: 8 }, (_, i) => ({
+const events = Array.from({ length: 1 }, (_, i) => ({
   id: `ATK-00${i + 1}`,
   title: "EVENT TITLE",
   vouchers: 555,

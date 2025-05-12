@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -22,68 +23,49 @@ import { supabase } from "../lib/supabase";
 
 SplashScreen.preventAutoHideAsync();
 
-const vouchers = Array(10).fill({
-  id: "ATK-008-2023",
-  recipient: "Kyle Howard Senoy",
-  email: "kyle@example.com",
-  status: "UNCLAIMED",
-});
-
 const list = () => {
   const router = useRouter();
+  const [vouchers, setVouchers] = React.useState<any[]>([]);
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
   });
 
-  async function fetchData() {
-    // Fetch voucher data
-    let { data: releasedvouchers, error } = await supabase
-        .from('ReleasedVoucher')
-        .select('Status');
+    const loadData = async () => {
+    const {data : vouchers0, error : error_fetchingVouchers} = await supabase
+      .from("ReleasedVoucher")
+      .select('*, Vouchers(*), Customers(*)');
 
-    if (error) {
-        console.log("Error fetching vouchers: " + error.message);
-        return;
+    if (error_fetchingVouchers) {
+      console.log("Error fetching vouchers:", error_fetchingVouchers);
+      return;
     }
 
-    console.log("Vouchers fetched successfully:", releasedvouchers);
-
-    let { data: personalInfos, error1 } = await supabase
-        .from('Customers')
-        .select('FirstName, LastName, Email, ContactNumber');
-
-    if (error) {
-        console.log("Error fetching vouchers: " + error1.message);
-        return;
-    }
-
-    console.log("Vouchers fetched successfully:", personalInfos);
-
-    let { data: voucher, error2 } = await supabase
-        .from('Vouchers')
-        .select('id');
-
-    if (error) {
-        console.log("Error fetching vouchers: " + error2.message);
-        return;
-    }
-
-    console.log("Vouchers fetched successfully:", voucher);
-    
+    console.log("Fetched vouchers:", vouchers0);
+    setVouchers(vouchers0 as any[]);
   }
 
+useFocusEffect(
+  React.useCallback(() => {
+    if (fontsLoaded) {
+      loadData()
+    }
+  }, [fontsLoaded])
+);
+
   useEffect(() => {
-    fetchData();
 
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
+
+    loadData();
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
     return null;
   }
+
 
   return (
     <View style={styles.container}>
@@ -140,16 +122,15 @@ const list = () => {
 
       <View style={styles.horizontalLine} />
 
-      {/* Voucher List */}
-      <FlatList
-        data={vouchers}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.tableRow}>
-            <Text style={styles.tableCell}>{item.id}</Text>
-            <Text style={styles.tableCell}>{item.recipient}</Text>
-            <Text style={styles.tableCell}>{item.email}</Text>
-            <Text style={[styles.tableCell, styles.status]}>{item.status}</Text>
+      <View>
+        {vouchers.map((item) => (
+          <View key={item.id} style={styles.tableRow}>
+            <Text style={styles.tableCell}>{item.Vouchers.id}</Text>
+            <Text style={styles.tableCell}>{item.Customers.FirstName + " " + item.Customers.LastName}</Text>
+            <Text style={styles.tableCell}>{item.Customers.Email}</Text>
+            <Text style={[styles.tableCell, styles.status]}>
+              {item.Vouchers.Status}
+            </Text>
             <Feather
               name="edit"
               size={16}
@@ -168,8 +149,8 @@ const list = () => {
               }
             />
           </View>
-        )}
-      />
+        ))}
+      </View>
     </View>
   );
 };

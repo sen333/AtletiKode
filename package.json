@@ -17,8 +17,11 @@
   "dependencies": {
     "@expo-google-fonts/manrope": "^0.3.0",
     "@expo/vector-icons": "^14.0.2",
+    "@lottiefiles/dotlottie-react": "^0.6.5",
+    "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
+    "@supabase/supabase-js": "^2.49.4",
     "expo": "^52.0.46",
     "expo-app-loading": "^1.0.3",
     "expo-barcode-scanner": "^13.0.1",

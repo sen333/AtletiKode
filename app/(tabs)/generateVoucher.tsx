@@ -8,6 +8,7 @@ import {
 } from "@expo-google-fonts/manrope";
 import * as SplashScreen from "expo-splash-screen";
 import LottieView from "lottie-react-native";
+import { supabase } from "../lib/supabase";
 
 const generateVoucher = () => {
   const [fontsLoaded] = useFonts({
