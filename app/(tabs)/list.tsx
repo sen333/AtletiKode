@@ -24,17 +24,19 @@ import { supabase } from "../lib/supabase";
 SplashScreen.preventAutoHideAsync();
 
 const list = () => {
-  const router = useRouter();
+   const router = useRouter();
   const [vouchers, setVouchers] = React.useState<any[]>([]);
+  const [unclaimedCount, setUnclaimedCount] = React.useState(0);
+  const [claimedCount, setClaimedCount] = React.useState(0);
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
   });
 
-    const loadData = async () => {
-    const {data : vouchers0, error : error_fetchingVouchers} = await supabase
+   const loadData = async () => {
+    const { data: vouchers0, error: error_fetchingVouchers } = await supabase
       .from("ReleasedVoucher")
-      .select('*, Vouchers(*), Customers(*)');
+      .select("*, Vouchers(*), Customers(*)");
 
     if (error_fetchingVouchers) {
       console.log("Error fetching vouchers:", error_fetchingVouchers);
@@ -43,7 +45,18 @@ const list = () => {
 
     console.log("Fetched vouchers:", vouchers0);
     setVouchers(vouchers0 as any[]);
-  }
+
+    // Calculate unclaimed and claimed vouchers
+    const unclaimed = vouchers0.filter(
+      (voucher) => voucher.Vouchers.Status === "Unclaimed"
+    ).length;
+    const claimed = vouchers0.filter(
+      (voucher) => voucher.Vouchers.Status === "Claimed"
+    ).length;
+
+    setUnclaimedCount(unclaimed);
+    setClaimedCount(claimed);
+  };
 
 useFocusEffect(
   React.useCallback(() => {
@@ -92,14 +105,14 @@ useFocusEffect(
 
       <View style={styles.horizontalLine} />
 
-      {/* Statistics Section */}
+       {/* Statistics Section */}
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>333</Text>
+          <Text style={styles.statNumber}>{unclaimedCount}</Text>
           <Text style={styles.statLabel}>Unclaimed Vouchers</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>333</Text>
+          <Text style={styles.statNumber}>{claimedCount}</Text>
           <Text style={styles.statLabel}>Claimed Vouchers</Text>
         </View>
       </View>
