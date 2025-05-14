@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect } from "react";
-import {supabase} from "../lib/supabase";
+import { supabase } from "../lib/supabase";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native"; // Import navigation hook
+import { useNavigation } from "@react-navigation/native";
 import {
   useFonts,
   Manrope_400Regular,
@@ -24,7 +24,7 @@ const ReviewVoucher = () => {
     Manrope_700Bold,
   });
 
-  const navigation = useNavigation(); // Initialize navigation
+  const navigation = useNavigation();
   const route = useRoute();
   const { voucherData } = route.params as { voucherData: any };
 
@@ -40,68 +40,76 @@ const ReviewVoucher = () => {
 
   if (!fontsLoaded) return null;
 
-    // We are now inserting the data to the database
-    const submitData = async () => {
-    console.log(JSON.stringify(voucherData.EventID)); // to see the exact raw value
-  
-  
-      // we insert first to customers table
-      const {data : custID, error : error_insertingCustomer} = await supabase
-       .from("Customers")
-       .insert([{
-        "FirstName" : voucherData.firstName,
-        "LastName" : voucherData.lastName,
-        "Email" : voucherData.email,
-        "ContactNumber" : voucherData.phoneNumber
-       }])
-       .select('*')
-       ;
-  
+  const submitData = async () => {
+    try {
+      const { data: custID, error: error_insertingCustomer } = await supabase
+        .from("Customers")
+        .insert([
+          {
+            FirstName: voucherData.firstName,
+            LastName: voucherData.lastName,
+            Email: voucherData.email,
+            ContactNumber: voucherData.phoneNumber,
+          },
+        ])
+        .select("*");
+
       if (error_insertingCustomer) {
-        console.log("Error inserting data: " + error_insertingCustomer.message);
+        console.log("Error inserting customer: " + error_insertingCustomer.message);
         return;
       }
-  
+
       const customerID = custID && custID[0] ? custID[0].id : null;
-  
-      // We insert to voucher table
-      const {data : temp_vouchID, error : error_insertingVoucher} = await supabase
-       .from("Vouchers")
-       .insert([{
-        "Discount" : voucherData.discount,
-        "Status" : "Unclaimed",
-       }])
-        .select('*')
-       ;
-  
+
+      const { data: temp_vouchID, error: error_insertingVoucher } = await supabase
+        .from("Vouchers")
+        .insert([
+          {
+            Discount: voucherData.discount,
+            Status: "Unclaimed",
+          },
+        ])
+        .select("*");
+
       if (error_insertingVoucher) {
-        console.log("Error inserting data: " + error_insertingVoucher.message);
+        console.log("Error inserting voucher: " + error_insertingVoucher.message);
         return;
       }
-  
+
       const voucherID = temp_vouchID && temp_vouchID[0] ? temp_vouchID[0].id : null;
-  
-      // We insert to released voucher table
-      const {data : temp_releasedID, error : error_insertingReleased} = await supabase
-       .from("ReleasedVoucher")
-       .insert([{
-        "CustomerID" : customerID,
-        "VoucherID" : voucherID, 
-        "EventID" : voucherData.voucherCode
-       }])
-       .select('*')
-       ;
-  
+
+      const { data: temp_releasedID, error: error_insertingReleased } = await supabase
+        .from("ReleasedVoucher")
+        .insert([
+          {
+            CustomerID: customerID,
+            VoucherID: voucherID,
+            EventID: voucherData.voucherCode,
+          },
+        ])
+        .select("*");
+
       if (error_insertingReleased) {
-        console.log("Error inserting data: " + error_insertingReleased.message);
+        console.log("Error inserting released voucher: " + error_insertingReleased.message);
         return;
-  
       }
-  
-  
+
       const releasedID = temp_releasedID && temp_releasedID[0] ? temp_releasedID[0].id : null;
-      navigation.navigate("generateVoucher")
+
+      const generatedData = {
+        ...voucherData,
+        customerID,
+        voucherID,
+        releasedID,
+      };
+
+      navigation.navigate("generateVoucher", {
+        generatedData,
+      });
+    } catch (err) {
+      console.error("Unexpected error: ", err);
     }
+  };
 
   return (
     <View style={styles.container}>
@@ -155,10 +163,9 @@ const ReviewVoucher = () => {
           voucher.
         </Text>
 
-        {/* Navigate to generateVoucher */}
         <TouchableOpacity
           style={styles.generateButton}
-          onPress={() => submitData()}
+          onPress={submitData}
         >
           <Text style={styles.generateButtonText}>Generate Voucher</Text>
         </TouchableOpacity>

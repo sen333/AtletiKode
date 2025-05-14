@@ -1,180 +1,113 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Image, Dimensions } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import {
-  useFonts,
-  Manrope_400Regular,
-  Manrope_700Bold,
-} from "@expo-google-fonts/manrope";
-import * as SplashScreen from "expo-splash-screen";
-import LottieView from "lottie-react-native";
-import { supabase } from "../lib/supabase";
+import React from "react";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import QRCode from "react-native-qrcode-svg";
+import { useRoute, useNavigation } from "@react-navigation/native";
 
-const generateVoucher = () => {
-  const [fontsLoaded] = useFonts({
-    Manrope_400Regular,
-    Manrope_700Bold,
+const GenerateVoucher = () => {
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { generatedData } = route.params as { generatedData: any };
+  
+  const qrValue = JSON.stringify({
+    customerID: generatedData.customerID,
+    voucherID: generatedData.voucherID,
+    releasedID: generatedData.releasedID,
+    firstName: generatedData.firstName,
+    lastName: generatedData.lastName,
+    email: generatedData.email,
+    phoneNumber: generatedData.phoneNumber,
+    discount: generatedData.discount,
+    voucherCode: generatedData.voucherCode,
   });
-
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 4000);
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
+  
+  const handleBackToAddVoucher = () => {
+    navigation.navigate("addVoucher");
+  };
 
   return (
+    
     <View style={styles.container}>
-      {/* Header */}
-      <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
-        <View style={styles.headerContent}>
-          <Image
-            source={require("../../assets/images/logo2.png")}
-            style={styles.logo}
-          />
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>AtletiKode</Text>
-            <Text style={styles.headerSubtitle}>
-              UP Mindanao Atletika's Voucher Management System
-            </Text>
-          </View>
-        </View>
-      </LinearGradient>
-
-      {/* Title */}
-      <View style={styles.sectionTitleContainer}>
-        <Text style={styles.sectionTitle}>Generate New Voucher</Text>
+      <Text style={styles.title}>Voucher Successfully Generated!</Text>
+      <Text style={styles.subtitle}>Scan or save the QR code below:</Text>
+      
+      <View style={styles.qrContainer}>
+        <QRCode
+          value={qrValue}
+          size={250}
+        />
       </View>
-
-      <View style={styles.horizontalLine} />
-
-      <Text style={styles.subtitle}>
-        Generating the voucher and sending it to the recipient's email.
-      </Text>
-
-      {/* Animation */}
-      <View style={styles.loadingContainer}>
-        {isLoading ? (
-          <>
-            <LottieView
-              source={require("../../assets/animations/dots-loader.json")} // Your animation file here
-              autoPlay
-              loop
-              style={{
-                width: width * 0.3, // 30% of screen width
-                height: width * 0.3, // Keep it square
-              }}
-            />
-            <Text style={[styles.loadingText, { fontSize: width * 0.04 }]}>
-              Generating Voucher. Please Wait.
-            </Text>
-          </>
-        ) : (
-          <>
-            <LottieView
-              source={require("../../assets/animations/check-success.json")} // Your checkmark animation
-              autoPlay
-              loop={false}
-              style={{
-                width: width * 0.3, // 30% of screen width
-                height: width * 0.3, // Keep it square
-              }}
-            />
-            <Text style={[styles.loadingText, { fontSize: width * 0.04 }]}>
-              Voucher Generated Successfully!
-            </Text>
-          </>
-        )}
-      </View>
+      
+      <Text style={styles.infoLabel}>Voucher Info:</Text>
+      <Text style={styles.infoText}>Name: {generatedData.firstName} {generatedData.lastName}</Text>
+      <Text style={styles.infoText}>Email: {generatedData.email}</Text>
+      <Text style={styles.infoText}>Phone: {generatedData.phoneNumber}</Text>
+      <Text style={styles.infoText}>Discount: {generatedData.discount}</Text>
+      <Text style={styles.infoText}>Voucher Code: {generatedData.voucherCode}</Text>
+      
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={handleBackToAddVoucher}
+      >
+        <Text style={styles.backButtonText}>Create Another Voucher</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F8F8" },
-  header: {
-    height: height * 0.16,
-    marginTop: 6,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingRight: 50,
-  },
-  headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  logo: {
-    width: width * 0.12,
-    height: width * 0.12,
-    marginRight: 10,
-  },
-  headerTextContainer: {
-    flexDirection: "column",
-  },
-  headerTitle: {
-    fontSize: width * 0.05,
-    color: "#fff",
-    fontWeight: "bold",
-    fontFamily: "Manrope_700Bold",
-    letterSpacing: -0.42,
-  },
-  headerSubtitle: {
-    fontSize: width * 0.03,
-    color: "#fff",
-    fontFamily: "Manrope_400Regular",
-    letterSpacing: -0.42,
-  },
-  sectionTitleContainer: {
-    padding: 14,
-    width: "100%",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    backgroundColor: "#F8F8F8",
-    marginTop: -30,
-  },
-  sectionTitle: {
-    fontSize: width * 0.05,
-    fontWeight: "bold",
-    color: "#13390B",
-    marginLeft: 4,
-    fontFamily: "Manrope_700Bold",
-    letterSpacing: -0.6,
-  },
-  horizontalLine: {
-    height: 1,
-    backgroundColor: "#13390B",
-    width: "92%",
-    alignSelf: "center",
-    marginBottom: 2,
-  },
-  loadingContainer: {
-    margin: 0,
-    alignItems: "center",
-    justifyContent: "center",
+  container: {
     flex: 1,
+    padding: 24,
+    backgroundColor: "#F8F8F8",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  loadingText: {
-    marginTop: 16,
+  title: {
+    fontSize: width * 0.05,
+    fontWeight: "bold",
+    marginBottom: 10,
     color: "#13390B",
-    fontFamily: "Manrope_700Bold",
   },
   subtitle: {
-    fontSize: width * 0.029,
+    fontSize: width * 0.04,
+    marginBottom: 20,
+    color: "#555",
+    textAlign: "center",
+  },
+  qrContainer: {
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    elevation: 4,
+    marginBottom: 30,
+  },
+  infoLabel: {
+    fontSize: width * 0.045,
+    fontWeight: "bold",
+    marginBottom: 8,
     color: "#13390B",
-    fontFamily: "Manrope_400Regular",
-    marginBottom: 5,
-    alignSelf: "center",
-    marginRight: 40,
+  },
+  infoText: {
+    fontSize: width * 0.035,
+    color: "#333",
+    marginBottom: 4,
+  },
+  backButton: {
+    backgroundColor: "#63120E",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 30,
+    width: "100%",
+    alignItems: "center",
+  },
+  backButtonText: {
+    color: "#fff",
+    fontSize: width * 0.035,
+    fontWeight: "bold",
   },
 });
 
-export default generateVoucher;
+export default GenerateVoucher;
