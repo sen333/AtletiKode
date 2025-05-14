@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
-  FlatList,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
@@ -20,7 +22,7 @@ import * as SplashScreen from "expo-splash-screen";
 
 SplashScreen.preventAutoHideAsync();
 
-const addVoucher = () => {
+const AddVoucher = () => {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
@@ -73,22 +75,11 @@ const addVoucher = () => {
 
   if (!fontsLoaded) return null;
 
-  const renderFormField = ({ item }: { item: any }) => (
-    <View>
-      <Text style={styles.label}>{item.label}:</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={item.placeholder}
-        placeholderTextColor="#999"
-        value={formData[item.key]}
-        onChangeText={(text) => handleInputChange(item.key, text)}
-        keyboardType={item.keyboardType || "default"}
-      />
-    </View>
-  );
-
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
         <View style={styles.headerContent}>
           <Image
@@ -117,20 +108,41 @@ const addVoucher = () => {
         </Text>
       </View>
 
-      <FlatList
-        data={formFields}
-        renderItem={renderFormField}
-        keyExtractor={(item) => item.key}
+      <ScrollView 
+        style={styles.scrollView}
         contentContainerStyle={styles.formContainer}
-      />
-
-      <TouchableOpacity
-        style={styles.generateButton}
-        onPress={handleGenerateVoucher}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.generateButtonText}>Generate Voucher</Text>
-      </TouchableOpacity>
-    </View>
+        {formFields.map((field) => (
+          <View key={field.key} style={styles.fieldContainer}>
+            <Text style={styles.label}>{field.label}:</Text>
+            <TouchableOpacity
+              activeOpacity={1}
+              style={styles.inputTouchable}
+              onPress={() => {
+                // This empty onPress helps improve touchability
+              }}
+            >
+              <TextInput
+                style={styles.input}
+                placeholder={field.placeholder}
+                placeholderTextColor="#999"
+                value={formData[field.key]}
+                onChangeText={(text) => handleInputChange(field.key, text)}
+                keyboardType={field.keyboardType || "default"}
+              />
+            </TouchableOpacity>
+          </View>
+        ))}
+        
+        <TouchableOpacity
+          style={styles.generateButton}
+          onPress={handleGenerateVoucher}
+        >
+          <Text style={styles.generateButtonText}>Generate Voucher</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -174,48 +186,58 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_400Regular",
     letterSpacing: -0.42,
   },
+  scrollView: {
+    flex: 1,
+  },
   formContainer: {
-    backgroundColor: "#F8F8F8",
-    marginTop: -10,
-    padding: 20,
-    paddingBottom: 60,
-    alignSelf: "center",
-    width: "100%",
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  fieldContainer: {
+    marginBottom: 1,
   },
   subtitleTitleContainer: {
     marginBottom: 14,
-    marginLeft: 9.8,
+    paddingHorizontal: 20,
     backgroundColor: "#F8F8F8",
   },
   subtitle: {
-    fontSize: width * 0.029,
+    fontSize: width * 0.026,
     color: "#13390B",
     fontFamily: "Manrope_400Regular",
-    marginRight: 30,
-    alignSelf: "center",
+    textAlign: "left",
   },
   label: {
     fontSize: width * 0.032,
     color: "#13390B",
     fontFamily: "Manrope_700Bold",
-    marginTop: 12,
-    marginBottom: 6,
+    marginBottom: 8,
+  },
+  inputTouchable: {
+    width: "100%",
   },
   input: {
     backgroundColor: "#FFF",
     paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    borderRadius: 12,
     fontSize: width * 0.035,
     fontFamily: "Manrope_400Regular",
     color: "#000",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    minHeight: 40,
   },
   generateButton: {
     backgroundColor: "#63120E",
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderRadius: 8,
     marginTop: 24,
-    marginHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   generateButtonText: {
     color: "#fff",
@@ -248,4 +270,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default addVoucher;
+export default AddVoucher;
