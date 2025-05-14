@@ -1,41 +1,51 @@
 import React, { useState } from "react";
-import { 
-  StatusBar, 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  Image, 
-  StyleSheet, 
+import {
+  StatusBar,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
   ScrollView,
-  Alert,
-  Switch
+  Switch,
 } from "react-native";
-import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../lib/supabase';
+import { useNavigation } from "@react-navigation/native";
+import { supabase } from "../lib/supabase";
+import { useFocusEffect } from "@react-navigation/native";
+import Modal from "react-native-modal";
 
 const LoginScreen = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false); // Visual-only state
+  const [isModalVisible, setModalVisible] = useState(false); // Custom modal state
+  const [modalMessage, setModalMessage] = useState(""); // Message for the modal
   const navigation = useNavigation();
+
+  // Reset the text fields when the page gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      setUsername("");
+      setPassword("");
+    }, [])
+  );
 
   const handleLogin = async () => {
     setLoading(true);
     console.log("Logging in with:", { username, password });
     const { error } = await supabase.auth.signInWithPassword({
-        email: username,
-        password: password
+      email: username,
+      password: password,
     });
     setLoading(false);
     if (error) {
-        Alert.alert(error.message);
+      setModalMessage(error.message); // Set the error message
+      setModalVisible(true); // Show the modal
+    } else {
+      navigation.navigate("list");
     }
-    else {
-        navigation.navigate('list'); 
-    }
-    
   };
 
   return (
@@ -44,9 +54,14 @@ const LoginScreen = () => {
         <StatusBar barStyle="light-content" backgroundColor="#63120E" />
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.header}>
-            <Image source={require("../../assets/images/logo2.png")} style={styles.logo} />
+            <Image
+              source={require("../../assets/images/logo2.png")}
+              style={styles.logo}
+            />
             <Text style={styles.title}>AtletiKode</Text>
-            <Text style={styles.subtitle}>UP Mindanao Atletika's Voucher Management System</Text>
+            <Text style={styles.subtitle}>
+              UP Mindanao Atletika's Voucher Management System
+            </Text>
           </View>
           <View style={styles.loginContainer}>
             <Text style={styles.loginTitle}>UP MINDANAO ATLETIKA</Text>
@@ -68,7 +83,7 @@ const LoginScreen = () => {
               value={password}
               onChangeText={setPassword}
             />
-            
+
             {/* Visual-only Remember Me checkbox */}
             <View style={styles.rememberMeContainer}>
               <Switch
@@ -80,15 +95,26 @@ const LoginScreen = () => {
               <Text style={styles.rememberMeText}>Remember Me</Text>
             </View>
 
-            <TouchableOpacity 
-              style={styles.button} 
-              onPress={handleLogin}
-            >
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
               <Text style={styles.buttonText}>Log in as Atletika Admin</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </View>
+
+      {/* Custom Modal */}
+      <Modal isVisible={isModalVisible} backdropOpacity={0.5}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Login Error</Text>
+          <Text style={styles.modalMessage}>{modalMessage}</Text>
+          <TouchableOpacity
+            style={styles.modalButton}
+            onPress={() => setModalVisible(false)}
+          >
+            <Text style={styles.modalButtonText}>OK</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -96,19 +122,13 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   outerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  appTitle: {
-    fontSize: 24,
-    color: '#63120E',
-    fontWeight: 'bold',
-    marginBottom: 10,
+    justifyContent: "center",
+    alignItems: "center",
   },
   container: {
     flex: 1,
     backgroundColor: "#63120E",
-    width: '100%',
+    width: "100%",
   },
   scrollContainer: {
     flexGrow: 1,
@@ -189,17 +209,49 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   rememberMeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 5,
     marginBottom: 10,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   rememberMeText: {
     fontFamily: "Manrope_400Regular",
     color: "#63120E",
     fontSize: 14,
     marginLeft: 10,
+  },
+  modalContainer: {
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#63120E",
+    marginBottom: 10,
+    fontFamily: "Manrope_700Bold",
+  },
+  modalMessage: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 20,
+    fontFamily: "Manrope_400Regular",
+  },
+  modalButton: {
+    backgroundColor: "#63120E",
+    borderRadius: 5,
+    padding: 10,
+    alignItems: "center",
+    width: "50%",
+  },
+  modalButtonText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontFamily: "Manrope_700Bold",
   },
 });
 

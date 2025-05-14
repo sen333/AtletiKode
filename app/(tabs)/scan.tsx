@@ -167,7 +167,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   header: {
-    height: height * 0.14,
+    height: height * 0.16,
+    marginTop: 6,
     justifyContent: "center",
     alignItems: "center",
     padding: 0,
@@ -260,7 +261,7 @@ const styles = StyleSheet.create({
   },
   scanText: {
     position: "absolute",
-    bottom: 136,
+    bottom: 114,
     color: "white",
     fontSize: 16,
     fontWeight: "bold",

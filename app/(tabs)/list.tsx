@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -18,13 +18,12 @@ import * as SplashScreen from "expo-splash-screen";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
-import { router } from "expo-router";
 import { supabase } from "../lib/supabase";
 
 SplashScreen.preventAutoHideAsync();
 
 const list = () => {
-   const router = useRouter();
+  const router = useRouter();
   const [vouchers, setVouchers] = React.useState<any[]>([]);
   const [unclaimedCount, setUnclaimedCount] = React.useState(0);
   const [claimedCount, setClaimedCount] = React.useState(0);
@@ -33,7 +32,7 @@ const list = () => {
     Manrope_700Bold,
   });
 
-   const loadData = async () => {
+  const loadData = async () => {
     const { data: vouchers0, error: error_fetchingVouchers } = await supabase
       .from("ReleasedVoucher")
       .select("*, Vouchers(*), Customers(*)");
@@ -58,16 +57,15 @@ const list = () => {
     setClaimedCount(claimed);
   };
 
-useFocusEffect(
-  React.useCallback(() => {
-    if (fontsLoaded) {
-      loadData()
-    }
-  }, [fontsLoaded])
-);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (fontsLoaded) {
+        loadData();
+      }
+    }, [fontsLoaded])
+  );
 
   useEffect(() => {
-
     if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
@@ -79,6 +77,35 @@ useFocusEffect(
     return null;
   }
 
+  const renderItem = ({ item }: { item: any }) => (
+    <View style={styles.tableRow}>
+      <Text style={styles.tableCell}>{item.Vouchers.id}</Text>
+      <Text style={styles.tableCell}>
+        {item.Customers.FirstName + " " + item.Customers.LastName}
+      </Text>
+      <Text style={styles.tableCell}>{item.Customers.Email}</Text>
+      <Text style={[styles.tableCell, styles.status]}>
+        {item.Vouchers.Status}
+      </Text>
+      <Feather
+        name="edit"
+        size={16}
+        color="#13390B"
+        style={styles.tableIcon}
+        onPress={() =>
+          router.push({
+            pathname: "/editVoucher",
+            params: {
+              id: item.id,
+              recipient: item.recipient,
+              email: item.email,
+              status: item.status,
+            },
+          })
+        }
+      />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -105,7 +132,7 @@ useFocusEffect(
 
       <View style={styles.horizontalLine} />
 
-       {/* Statistics Section */}
+      {/* Statistics Section */}
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
           <Text style={styles.statNumber}>{unclaimedCount}</Text>
@@ -135,35 +162,13 @@ useFocusEffect(
 
       <View style={styles.horizontalLine} />
 
-      <View>
-        {vouchers.map((item) => (
-          <View key={item.id} style={styles.tableRow}>
-            <Text style={styles.tableCell}>{item.Vouchers.id}</Text>
-            <Text style={styles.tableCell}>{item.Customers.FirstName + " " + item.Customers.LastName}</Text>
-            <Text style={styles.tableCell}>{item.Customers.Email}</Text>
-            <Text style={[styles.tableCell, styles.status]}>
-              {item.Vouchers.Status}
-            </Text>
-            <Feather
-              name="edit"
-              size={16}
-              color="#13390B"
-              style={styles.tableIcon}
-              onPress={() =>
-                router.push({
-                  pathname: "/editVoucher",
-                  params: {
-                    id: item.id,
-                    recipient: item.recipient,
-                    email: item.email,
-                    status: item.status,
-                  },
-                })
-              }
-            />
-          </View>
-        ))}
-      </View>
+      {/* Table Rows */}
+      <FlatList
+        data={vouchers}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
     </View>
   );
 };
@@ -172,7 +177,8 @@ const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F8F8" },
   header: {
-    height: height * 0.14,
+    height: height * 0.16,
+    marginTop: 6,
     justifyContent: "center",
     alignItems: "center",
     padding: 0,

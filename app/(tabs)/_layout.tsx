@@ -1,50 +1,58 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Dimensions } from 'react-native';
 import { HapticTab } from '@/components/HapticTab';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Entypo from '@expo/vector-icons/Entypo';
+
+const { width } = Dimensions.get('window'); // Get screen width
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: 'dark', // Set a static color for active tab
+        tabBarActiveTintColor: '#000', // Set active tab color
+        tabBarInactiveTintColor: 'gray', // Set inactive tab color
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarInactiveTintColor: 'gray', // Set a static color for inactive tab
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
           alignContent: 'center',
           justifyContent: 'center',
           paddingTop: 10,
+          height: 70, // Increase height for better spacing
+        },
+        tabBarLabelStyle: {
+          fontSize: width * 0.035, // Adjust font size for responsiveness
         },
       }}
     >
-      {/* Login Tab */}
+      {/* Hidden Login Tab */}
       <Tabs.Screen
         name="index"
         options={{
-          href: null, // completely hide from tab bar
-          tabBarStyle: { display: 'none' },
-        }}
+        href: null, // Ensure the route is accessible
+        tabBarStyle: { display: 'none' }, // Still hide it from the tab bar
+      }}
       />
-       {/* Home Tab */}
-       <Tabs.Screen
+
+      {/* Home Tab */}
+      <Tabs.Screen
         name="list"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Entypo name="home" size={24} color={color} />,
+          tabBarLabel: 'Home',
+          tabBarIcon: ({ color }) => <Entypo name="home" size={28} color={color} />, // Slightly larger icon
         }}
       />
 
-
-      {/* Add Voucher Tab */}
+      {/* Events Tab */}
       <Tabs.Screen
         name="explore"
         options={{
           title: 'Events',
-          tabBarIcon: ({ color }) => <Entypo name="list" size={24} color={color} />,
+          tabBarLabel: 'Events',
+          tabBarIcon: ({ color }) => <Entypo name="list" size={28} color={color} />, // Slightly larger icon
         }}
       />
 
@@ -53,6 +61,7 @@ export default function TabLayout() {
         name="scan"
         options={{
           title: 'Scan',
+          tabBarLabel: 'Scan',
           tabBarIcon: ({ color }) => (
             <View style={styles.floatingIcon}>
               <MaterialCommunityIcons name="qrcode-scan" size={36} color={color} />
@@ -66,7 +75,8 @@ export default function TabLayout() {
         name="addVoucher"
         options={{
           title: 'Add Voucher',
-          tabBarIcon: ({ color }) => <Entypo name="add-to-list" size={24} color={color} />,
+          tabBarLabel: 'Add Voucher',
+          tabBarIcon: ({ color }) => <Entypo name="add-to-list" size={28} color={color} />,
         }}
       />
 
@@ -75,17 +85,18 @@ export default function TabLayout() {
         name="logout"
         options={{
           title: 'Logout',
-          tabBarIcon: ({ color }) => <Entypo name="log-out" size={24} color={color} />,
+          tabBarLabel: 'Logout',
+          tabBarIcon: ({ color }) => <Entypo name="log-out" size={28} color={color} />,
         }}
       />
 
+      {/* Hidden Tabs */}
       <Tabs.Screen
         name="editVoucher"
         options={{
           href: null,
         }}
       />
-
       <Tabs.Screen
         name="reviewVoucher"
         options={{
@@ -95,13 +106,10 @@ export default function TabLayout() {
       <Tabs.Screen
         name="generateVoucher"
         options={{
-          href: null, // completely hide from tab bar
+          href: null,
         }}
       />
     </Tabs>
-
-
-    
   );
 }
 
@@ -109,16 +117,18 @@ const styles = StyleSheet.create({
   floatingIcon: {
     backgroundColor: '#FFFFFF',
     borderRadius: 30,
-    padding: 12   ,
-    width:60,
-    height: 60,
+    padding: 12,
+    width: 70, // Adjust size for better visibility
+    height: 70,
     elevation: 5, // Add shadow for Android
     shadowColor: '#000', // Add shadow for iOS
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     position: 'absolute',
-    bottom: 8, // Float above the tab bar
+    bottom: 10, // Float above the tab bar
     alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

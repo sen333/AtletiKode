@@ -69,7 +69,7 @@ const ReviewVoucher = () => {
        .from("Vouchers")
        .insert([{
         "Discount" : voucherData.discount,
-        "Status" : "ACTIVE"
+        "Status" : "Unclaimed",
        }])
         .select('*')
        ;
@@ -175,7 +175,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F8F8",
   },
   header: {
-    height: height * 0.14,
+    height: height * 0.16,
+    marginTop: 6,
     justifyContent: "center",
     alignItems: "center",
     padding: 0,
