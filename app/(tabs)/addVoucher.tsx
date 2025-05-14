@@ -7,9 +7,10 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  FlatList,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native"; // Updated import
+import { useNavigation } from "@react-navigation/native";
 import {
   useFonts,
   Manrope_400Regular,
@@ -37,6 +38,16 @@ const addVoucher = () => {
     voucherCode: "",
   });
 
+  // Define form fields as an array
+  const formFields = [
+    { key: "firstName", label: "Recipient's First Name", placeholder: "Enter first name" },
+    { key: "lastName", label: "Recipient's Last Name", placeholder: "Enter last name" },
+    { key: "email", label: "Recipient's Email Address", placeholder: "Enter email address", keyboardType: "email-address" },
+    { key: "phoneNumber", label: "Recipient's Phone Number", placeholder: "Enter phone number", keyboardType: "phone-pad" },
+    { key: "discount", label: "Recipient's Discount Benefit", placeholder: "Enter discount (e.g. 20%)" },
+    { key: "voucherCode", label: "Atletika Event Voucher Code (ATK-XXX)", placeholder: "Enter the event's voucher code" },
+  ];
+
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
@@ -51,7 +62,6 @@ const addVoucher = () => {
     navigation.navigate("reviewVoucher", {
       voucherData: formData,
     });
-
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -62,6 +72,20 @@ const addVoucher = () => {
   };
 
   if (!fontsLoaded) return null;
+
+  const renderFormField = ({ item }: { item: any }) => (
+    <View>
+      <Text style={styles.label}>{item.label}:</Text>
+      <TextInput
+        style={styles.input}
+        placeholder={item.placeholder}
+        placeholderTextColor="#999"
+        value={formData[item.key]}
+        onChangeText={(text) => handleInputChange(item.key, text)}
+        keyboardType={item.keyboardType || "default"}
+      />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -93,70 +117,19 @@ const addVoucher = () => {
         </Text>
       </View>
 
-      <View style={styles.formContainer}>
-        <Text style={styles.label}>Recipient's First Name:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter first name"
-          placeholderTextColor="#999"
-          value={formData.firstName}
-          onChangeText={(text) => handleInputChange("firstName", text)}
-        />
+      <FlatList
+        data={formFields}
+        renderItem={renderFormField}
+        keyExtractor={(item) => item.key}
+        contentContainerStyle={styles.formContainer}
+      />
 
-        <Text style={styles.label}>Recipient's Last Name:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter last name"
-          placeholderTextColor="#999"
-          value={formData.lastName}
-          onChangeText={(text) => handleInputChange("lastName", text)}
-        />
-
-        <Text style={styles.label}>Recipient's Email Address:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter email address"
-          placeholderTextColor="#999"
-          value={formData.email}
-          onChangeText={(text) => handleInputChange("email", text)}
-          keyboardType="email-address"
-        />
-
-        <Text style={styles.label}>Recipient's Phone Number:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter phone number"
-          placeholderTextColor="#999"
-          value={formData.phoneNumber}
-          onChangeText={(text) => handleInputChange("phoneNumber", text)}
-          keyboardType="phone-pad"
-        />
-
-        <Text style={styles.label}>Recipient's Discount Benefit:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter discount (e.g. 20%)"
-          placeholderTextColor="#999"
-          value={formData.discount}
-          onChangeText={(text) => handleInputChange("discount", text)}
-        />
-
-        <Text style={styles.label}>Atletika Event Voucher Code (ATK-XXX):</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter the event's voucher code"
-          placeholderTextColor="#999"
-          value={formData.voucherCode}
-          onChangeText={(text) => handleInputChange("voucherCode", text)}
-        />
-
-        <TouchableOpacity
-          style={styles.generateButton}
-          onPress={handleGenerateVoucher}
-        >
-          <Text style={styles.generateButtonText}>Generate Voucher</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={styles.generateButton}
+        onPress={handleGenerateVoucher}
+      >
+        <Text style={styles.generateButtonText}>Generate Voucher</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -242,6 +215,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     marginTop: 24,
+    marginHorizontal: 20,
   },
   generateButtonText: {
     color: "#fff",
