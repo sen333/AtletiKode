@@ -12,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import {
   useFonts,
   Manrope_400Regular,
@@ -39,6 +39,21 @@ const AddVoucher = () => {
     discount: "",
     voucherCode: "",
   });
+
+  // Reset form fields when the page gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phoneNumber: "",
+        discount: "",
+        voucherCode: "",
+      });
+    }, [])
+  );
+
 
   // Define form fields as an array
   const formFields = [

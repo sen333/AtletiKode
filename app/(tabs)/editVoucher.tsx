@@ -1,4 +1,3 @@
-"use client"
 
 import { useEffect, useLayoutEffect, useState } from "react"
 import {
@@ -537,9 +536,6 @@ const EditVoucher = () => {
     <View style={styles.container}>
       <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
         <View style={styles.headerContent}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
           <Image source={require("../../assets/images/logo2.png")} style={styles.logo} />
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>AtletiKode</Text>
