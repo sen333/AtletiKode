@@ -1,3 +1,4 @@
+"use client"
 
 import { useEffect, useLayoutEffect, useState } from "react"
 import {
@@ -32,7 +33,6 @@ const EditVoucher = () => {
   const [dataLoading, setDataLoading] = useState(true)
   const [customerId, setCustomerId] = useState<string | null>(null)
   const [releasedVoucherId, setReleasedVoucherId] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<string[]>([])
   const [voucherExists, setVoucherExists] = useState(false)
   const [voucherData, setVoucherData] = useState<any>(null)
 
@@ -49,23 +49,17 @@ const EditVoucher = () => {
     discount: "",
   })
 
-  // Add debug info
-  const addDebugInfo = (info: string) => {
-    console.log(info)
-    setDebugInfo((prev) => [...prev, info])
-  }
-
   // Function to fetch all vouchers and find the matching one
   const fetchVoucherData = async () => {
     if (!voucherId) {
       setDataLoading(false)
-      addDebugInfo("No voucher ID provided")
+      console.log("No voucher ID provided")
       return
     }
 
     try {
       setDataLoading(true)
-      addDebugInfo(`Fetching voucher data for ID: ${voucherId}`)
+      console.log(`Fetching voucher data for ID: ${voucherId}`)
 
       // First try to get the voucher directly
       const { data: directVoucher, error: directError } = await supabase
@@ -75,7 +69,7 @@ const EditVoucher = () => {
         .single()
 
       if (!directError && directVoucher) {
-        addDebugInfo(`Found voucher directly: ${JSON.stringify(directVoucher)}`)
+        console.log(`Found voucher directly: ${JSON.stringify(directVoucher)}`)
 
         // Now get the released voucher that references this voucher
         const { data: releasedData, error: releasedError } = await supabase
@@ -90,7 +84,7 @@ const EditVoucher = () => {
           .single()
 
         if (!releasedError && releasedData) {
-          addDebugInfo(`Found released voucher: ${JSON.stringify(releasedData)}`)
+          console.log(`Found released voucher: ${JSON.stringify(releasedData)}`)
           setReleasedVoucherId(releasedData.id)
 
           if (releasedData.CustomerID) {
@@ -104,7 +98,7 @@ const EditVoucher = () => {
               .single()
 
             if (!customerError && customerData) {
-              addDebugInfo(`Found customer: ${JSON.stringify(customerData)}`)
+              console.log(`Found customer: ${JSON.stringify(customerData)}`)
 
               // Set form data
               setFormData({
@@ -126,11 +120,11 @@ const EditVoucher = () => {
               setDataLoading(false)
               return
             } else {
-              addDebugInfo(`Error fetching customer: ${customerError?.message || "No customer found"}`)
+              console.log(`Error fetching customer: ${customerError?.message || "No customer found"}`)
             }
           }
         } else {
-          addDebugInfo(`Error fetching released voucher: ${releasedError?.message || "No released voucher found"}`)
+          console.log(`Error fetching released voucher: ${releasedError?.message || "No released voucher found"}`)
         }
 
         // Even if we couldn't get related data, we still have the voucher
@@ -147,7 +141,7 @@ const EditVoucher = () => {
       }
 
       // If direct approach failed, try to find the voucher in ReleasedVoucher
-      addDebugInfo("Direct voucher lookup failed, trying through ReleasedVoucher")
+      console.log("Direct voucher lookup failed, trying through ReleasedVoucher")
 
       // Try to find the voucher as a ReleasedVoucher ID
       const { data: asReleasedId, error: releasedIdError } = await supabase
@@ -162,7 +156,7 @@ const EditVoucher = () => {
         .single()
 
       if (!releasedIdError && asReleasedId) {
-        addDebugInfo(`Found as ReleasedVoucher ID: ${JSON.stringify(asReleasedId)}`)
+        console.log(`Found as ReleasedVoucher ID: ${JSON.stringify(asReleasedId)}`)
         setReleasedVoucherId(asReleasedId.id)
 
         // Get the actual voucher
@@ -173,7 +167,7 @@ const EditVoucher = () => {
           .single()
 
         if (!voucherError && voucherFromReleased) {
-          addDebugInfo(`Found voucher from released: ${JSON.stringify(voucherFromReleased)}`)
+          console.log(`Found voucher from released: ${JSON.stringify(voucherFromReleased)}`)
 
           if (asReleasedId.CustomerID) {
             setCustomerId(asReleasedId.CustomerID)
@@ -186,7 +180,7 @@ const EditVoucher = () => {
               .single()
 
             if (!customerError && customerData) {
-              addDebugInfo(`Found customer: ${JSON.stringify(customerData)}`)
+              console.log(`Found customer: ${JSON.stringify(customerData)}`)
 
               // Set form data
               setFormData({
@@ -226,7 +220,7 @@ const EditVoucher = () => {
       }
 
       // If all approaches failed, try one last approach - get all vouchers and search
-      addDebugInfo("All direct approaches failed, trying to search all vouchers")
+      console.log("All direct approaches failed, trying to search all vouchers")
 
       const { data: allVouchers, error: allError } = await supabase.from("Vouchers").select("*")
 
@@ -235,7 +229,7 @@ const EditVoucher = () => {
         const matchingVoucher = allVouchers.find((v) => v.id && v.id.toString() === voucherId.toString())
 
         if (matchingVoucher) {
-          addDebugInfo(`Found matching voucher in all vouchers: ${JSON.stringify(matchingVoucher)}`)
+          console.log(`Found matching voucher in all vouchers: ${JSON.stringify(matchingVoucher)}`)
 
           setVoucherData({
             voucher: matchingVoucher,
@@ -251,11 +245,11 @@ const EditVoucher = () => {
       }
 
       // If we get here, we couldn't find the voucher
-      addDebugInfo("No voucher found with any matching strategy")
+      console.log("No voucher found with any matching strategy")
       Alert.alert("Error", "Voucher not found. Please check the ID.")
       setVoucherExists(false)
     } catch (error) {
-      addDebugInfo(`Error in fetchVoucherData: ${(error as Error).message}`)
+      console.log(`Error in fetchVoucherData: ${(error as Error).message}`)
       Alert.alert("Error", "Failed to load voucher data")
     } finally {
       setDataLoading(false)
@@ -279,12 +273,12 @@ const EditVoucher = () => {
   // Function to directly update discount in Vouchers table
   const updateVoucherDiscount = async (discount: number) => {
     try {
-      addDebugInfo(`Directly updating voucher discount to: ${discount}`)
+      console.log(`Directly updating voucher discount to: ${discount}`)
 
       // Get the actual Voucher ID from the data
       const actualVoucherId = voucherData?.voucher?.id || voucherData?.releasedVoucher?.VoucherID || voucherId
 
-      addDebugInfo(`Using Voucher ID for update: ${actualVoucherId}`)
+      console.log(`Using Voucher ID for update: ${actualVoucherId}`)
 
       const { error } = await supabase
         .from("Vouchers")
@@ -294,14 +288,14 @@ const EditVoucher = () => {
         .eq("id", actualVoucherId)
 
       if (error) {
-        addDebugInfo(`Error updating discount: ${error.message}`)
+        console.log(`Error updating discount: ${error.message}`)
         throw new Error(`Failed to update discount: ${error.message}`)
       }
 
-      addDebugInfo("Discount update query executed successfully")
+      console.log("Discount update query executed successfully")
       return true
     } catch (error) {
-      addDebugInfo(`Error in updateVoucherDiscount: ${(error as Error).message}`)
+      console.log(`Error in updateVoucherDiscount: ${(error as Error).message}`)
       throw error
     }
   }
@@ -324,7 +318,7 @@ const EditVoucher = () => {
 
     try {
       setLoading(true)
-      addDebugInfo("Starting update process...")
+      console.log("Starting update process...")
 
       // Update voucher discount first
       if (formData.discount) {
@@ -335,9 +329,9 @@ const EditVoucher = () => {
           }
 
           await updateVoucherDiscount(discountValue)
-          addDebugInfo("Discount updated successfully")
+          console.log("Discount updated successfully")
         } catch (error) {
-          addDebugInfo(`Error updating discount: ${(error as Error).message}`)
+          console.log(`Error updating discount: ${(error as Error).message}`)
           Alert.alert("Error", "Failed to update discount: " + (error as Error).message)
           setLoading(false)
           return
@@ -346,7 +340,7 @@ const EditVoucher = () => {
 
       // Update customer data if we have a customer ID
       if (customerId) {
-        addDebugInfo(`Updating customer with ID: ${customerId}`)
+        console.log(`Updating customer with ID: ${customerId}`)
 
         const customerData = {
           FirstName: formData.firstName,
@@ -358,21 +352,21 @@ const EditVoucher = () => {
         const { error: customerError } = await supabase.from("Customers").update(customerData).eq("id", customerId)
 
         if (customerError) {
-          addDebugInfo(`Error updating customer: ${customerError.message}`)
+          console.log(`Error updating customer: ${customerError.message}`)
           Alert.alert("Error", "Failed to update customer details: " + customerError.message)
           setLoading(false)
           return
         }
 
-        addDebugInfo("Customer data updated successfully")
+        console.log("Customer data updated successfully")
       } else {
-        addDebugInfo("No customer ID found, cannot update customer data")
+        console.log("No customer ID found, cannot update customer data")
         Alert.alert("Error", "Customer information not found")
         setLoading(false)
         return
       }
 
-      addDebugInfo("All updates completed successfully")
+      console.log("All updates completed successfully")
       setLoading(false)
 
       // Show success alert and then navigate
@@ -384,7 +378,7 @@ const EditVoucher = () => {
         router.push("/list")
       }, 1500) // 1.5 second delay to allow the user to see the success message
     } catch (error) {
-      addDebugInfo(`Error updating voucher: ${(error as Error).message}`)
+      console.log(`Error updating voucher: ${(error as Error).message}`)
       Alert.alert("Error", "Failed to update voucher details: " + (error as Error).message)
       setLoading(false)
     }
@@ -392,7 +386,7 @@ const EditVoucher = () => {
 
   // Show delete confirmation UI
   const handleDelete = () => {
-    addDebugInfo("Delete button pressed")
+    console.log("Delete button pressed")
     setShowDeleteConfirm(true)
     setDeleteError(null)
     setDeleteStatus(null)
@@ -400,13 +394,13 @@ const EditVoucher = () => {
 
   // Cancel delete
   const cancelDelete = () => {
-    addDebugInfo("Delete cancelled")
+    console.log("Delete cancelled")
     setShowDeleteConfirm(false)
   }
 
   // Confirm delete - complete implementation that deletes from all tables
   const confirmDelete = async () => {
-    addDebugInfo("Delete confirmed")
+    console.log("Delete confirmed")
     setLoading(true)
     setDeleteStatus("Starting deletion process...")
 
@@ -414,7 +408,7 @@ const EditVoucher = () => {
       // Get the IDs we need
       const actualVoucherId = voucherData?.voucher?.id || voucherData?.releasedVoucher?.VoucherID || voucherId
 
-      addDebugInfo(`Using Voucher ID for deletion: ${actualVoucherId}`)
+      console.log(`Using Voucher ID for deletion: ${actualVoucherId}`)
 
       // Step 1: Check for AdminVoucherRelease entries
       if (releasedVoucherId) {
@@ -425,7 +419,7 @@ const EditVoucher = () => {
           .eq("ReleasedVoucherID", releasedVoucherId)
 
         if (adminCheckError) {
-          addDebugInfo(`Error checking AdminVoucherRelease: ${adminCheckError.message}`)
+          console.log(`Error checking AdminVoucherRelease: ${adminCheckError.message}`)
         } else if (adminData && adminData.length > 0) {
           // Delete from AdminVoucherRelease
           setDeleteStatus("Deleting from AdminVoucherRelease...")
@@ -435,15 +429,15 @@ const EditVoucher = () => {
             .eq("ReleasedVoucherID", releasedVoucherId)
 
           if (adminDeleteError) {
-            addDebugInfo(`Error deleting from AdminVoucherRelease: ${adminDeleteError.message}`)
+            console.log(`Error deleting from AdminVoucherRelease: ${adminDeleteError.message}`)
             setDeleteError(`Failed to delete from AdminVoucherRelease: ${adminDeleteError.message}`)
             setLoading(false)
             return
           }
 
-          addDebugInfo("Successfully deleted from AdminVoucherRelease")
+          console.log("Successfully deleted from AdminVoucherRelease")
         } else {
-          addDebugInfo("No AdminVoucherRelease entries found")
+          console.log("No AdminVoucherRelease entries found")
         }
       }
 
@@ -453,13 +447,13 @@ const EditVoucher = () => {
         const { error: releasedError } = await supabase.from("ReleasedVoucher").delete().eq("id", releasedVoucherId)
 
         if (releasedError) {
-          addDebugInfo(`Error deleting from ReleasedVoucher: ${releasedError.message}`)
+          console.log(`Error deleting from ReleasedVoucher: ${releasedError.message}`)
           setDeleteError(`Failed to delete from ReleasedVoucher: ${releasedError.message}`)
           setLoading(false)
           return
         }
 
-        addDebugInfo("Successfully deleted from ReleasedVoucher")
+        console.log("Successfully deleted from ReleasedVoucher")
       }
 
       // Step 3: Delete from Customers
@@ -468,13 +462,13 @@ const EditVoucher = () => {
         const { error: customerError } = await supabase.from("Customers").delete().eq("id", customerId)
 
         if (customerError) {
-          addDebugInfo(`Error deleting from Customers: ${customerError.message}`)
+          console.log(`Error deleting from Customers: ${customerError.message}`)
           setDeleteError(`Failed to delete from Customers: ${customerError.message}`)
           setLoading(false)
           return
         }
 
-        addDebugInfo("Successfully deleted from Customers")
+        console.log("Successfully deleted from Customers")
       }
 
       // Step 4: Delete from Vouchers
@@ -482,17 +476,17 @@ const EditVoucher = () => {
       const { error: voucherError } = await supabase.from("Vouchers").delete().eq("id", actualVoucherId)
 
       if (voucherError) {
-        addDebugInfo(`Error deleting from Vouchers: ${voucherError.message}`)
+        console.log(`Error deleting from Vouchers: ${voucherError.message}`)
         setDeleteError(`Failed to delete from Vouchers: ${voucherError.message}`)
         setLoading(false)
         return
       }
 
-      addDebugInfo("Successfully deleted from Vouchers")
+      console.log("Successfully deleted from Vouchers")
 
       // All deletions successful
       setDeleteStatus("Deletion completed successfully!")
-      addDebugInfo("All deletions completed successfully")
+      console.log("All deletions completed successfully")
       setLoading(false)
 
       // Close the modal and navigate after a short delay
@@ -502,7 +496,7 @@ const EditVoucher = () => {
       }, 1000)
     } catch (error) {
       const errorMessage = (error as Error).message
-      addDebugInfo(`Exception in confirmDelete: ${errorMessage}`)
+      console.log(`Exception in confirmDelete: ${errorMessage}`)
       setDeleteError(`An error occurred: ${errorMessage}`)
       setDeleteStatus(null)
       setLoading(false)
@@ -685,22 +679,6 @@ const EditVoucher = () => {
                 <Text style={styles.deleteButtonText}>Delete Voucher</Text>
               )}
             </TouchableOpacity>
-
-            {__DEV__ && (
-              <View style={styles.debugContainer}>
-                <Text style={styles.debugTitle}>Debug Information:</Text>
-                <Text style={styles.debugText}>Voucher ID: {voucherId || "None"}</Text>
-                <Text style={styles.debugText}>Customer ID: {customerId || "None"}</Text>
-                <Text style={styles.debugText}>Released Voucher ID: {releasedVoucherId || "None"}</Text>
-                <Text style={styles.debugText}>Voucher Exists: {voucherExists ? "Yes" : "No"}</Text>
-                <Text style={styles.debugTitle}>Debug Log:</Text>
-                {debugInfo.map((info, index) => (
-                  <Text key={index} style={styles.debugLog}>
-                    {info}
-                  </Text>
-                ))}
-              </View>
-            )}
           </View>
         </ScrollView>
       )}
@@ -898,30 +876,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginLeft: 9.8,
     backgroundColor: "#F8F8F8",
-  },
-  debugContainer: {
-    marginTop: 30,
-    padding: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-  debugTitle: {
-    fontWeight: "bold",
-    marginBottom: 5,
-    marginTop: 10,
-    color: "#333",
-  },
-  debugText: {
-    fontSize: 12,
-    color: "#333",
-    marginBottom: 3,
-  },
-  debugLog: {
-    fontSize: 11,
-    color: "#666",
-    marginBottom: 2,
   },
   // Styles for delete confirmation
   confirmOverlay: {
