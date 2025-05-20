@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -15,15 +16,9 @@ import {
 } from "@expo-google-fonts/manrope";
 import * as SplashScreen from "expo-splash-screen";
 import Feather from "@expo/vector-icons/Feather";
-import { Dimensions } from "react-native";
+import { supabase } from "../lib/supabase";
 
 SplashScreen.preventAutoHideAsync();
-
-const events = Array.from({ length: 1 }, (_, i) => ({
-  id: `ATK-00${i + 1}`,
-  title: "EVENT TITLE",
-  vouchers: 555,
-}));
 
 const EventCard = ({ event }) => (
   <View style={styles.card}>
@@ -33,7 +28,7 @@ const EventCard = ({ event }) => (
     </View>
     <View style={styles.rightSection}>
       <View>
-        <Text style={styles.voucherCount}>{event.vouchers}</Text>
+        <Text style={styles.voucherCount}>{event.totalVouchers}</Text>
         <Text style={styles.voucherLabel}>Released Vouchers</Text>
       </View>
     </View>
@@ -48,12 +43,48 @@ const explore = () => {
     Manrope_400Regular,
     Manrope_700Bold,
   });
+  const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync();
+      loadEvents();
     }
   }, [fontsLoaded]);
+
+  const loadEvents = async () => {
+    // Fetch released vouchers with event info
+    const { data: vouchers, error } = await supabase
+      .from("ReleasedVoucher")
+      .select("*, Vouchers(*)");
+
+    if (error) {
+      console.log("Error fetching vouchers:", error);
+      return;
+    }
+
+    // Group by event
+    const eventMap: Record<string, any> = {};
+    vouchers.forEach((voucher: any) => {
+      const eventId = voucher.Vouchers?.EventID || "Unknown";
+      const eventTitle = voucher.Vouchers?.EventTitle || "EVENT TITLE";
+      if (!eventMap[eventId]) {
+        eventMap[eventId] = {
+          id: eventId,
+          title: eventTitle,
+          totalVouchers: 0,
+        };
+      }
+      eventMap[eventId].totalVouchers += 1;
+    });
+
+      const grouped = Object.values(eventMap).map((event, i) => ({
+    ...event,
+    id: `ATK-00${i + 1}`,
+  }));
+
+  setEvents(grouped);
+  };
 
   if (!fontsLoaded) {
     return null;
@@ -96,6 +127,7 @@ const explore = () => {
 
 const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
+  // ...existing styles...
   container: { flex: 1, backgroundColor: "#F8F8F8" },
   header: {
     height: height * 0.16,
@@ -162,8 +194,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
     borderRadius: 20,
-    padding: width * 0.04, // 4% of screen width
-    marginBottom: width * 0.03, // 3% of screen width
+    padding: width * 0.04,
+    marginBottom: width * 0.03,
     elevation: 3,
     width: "92%",
     alignSelf: "center",
@@ -171,11 +203,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   eventCode: {
-    fontSize: width * 0.03, // 3% of screen width
+    fontSize: width * 0.03,
     color: "#13390B",
   },
   eventTitle: {
-    fontSize: width * 0.045, // 4.5% of screen width
+    fontSize: width * 0.045,
     fontWeight: "bold",
     color: "#13390B",
   },
@@ -185,13 +217,13 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   voucherCount: {
-    fontSize: width * 0.05, // 5% of screen width
+    fontSize: width * 0.05,
     fontWeight: "bold",
     color: "#13390B",
     textAlign: "center",
   },
   voucherLabel: {
-    fontSize: width * 0.025, // 2.5% of screen width
+    fontSize: width * 0.025,
     color: "#13390B",
     textAlign: "right",
   },

@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Alert } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import LottieView from "lottie-react-native";
+import { captureRef } from "react-native-view-shot";
 
 const dotsLoader = require("../../assets/animations/dots-loader.json");
 const checkSuccess = require("../../assets/animations/check-success.json");
-
 
 const GenerateVoucher = () => {
   const route = useRoute();
@@ -15,6 +15,7 @@ const GenerateVoucher = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const qrRef = useRef<View>(null);
 
   const qrValue = JSON.stringify({
     customerID: generatedData.customerID,
@@ -29,15 +30,48 @@ const GenerateVoucher = () => {
   });
 
   useEffect(() => {
-    // Simulate a delay for loading effect
     const timer = setTimeout(() => {
       setIsLoading(false);
       setShowSuccess(true);
-      // Hide success animation after 1 second
       setTimeout(() => setShowSuccess(false), 2200);
-    }, 4000); // Adjust the delay as needed
+    }, 4000);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleSendEmail = async () => {
+    try {
+      const base64 = await captureRef(qrRef, {
+        format: "png",
+        quality: 1,
+        result: "base64",
+      });
+
+      const cleanBase64 = base64.replace(/^data:image\/png;base64,/, "");
+
+      const response = await fetch("https://kaqwljgkbeqyotgegusj.functions.supabase.co/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: generatedData.email,
+          firstName: generatedData.firstName,
+          lastName: generatedData.lastName,
+          base64Image: cleanBase64,
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        Alert.alert("Success", "QR code sent to the recipient's email.");
+      } else {
+        Alert.alert("Error", "Failed to send the QR code.");
+      }
+    } catch (error) {
+      console.error("Error sending QR code:", error);
+      Alert.alert("Error", "Something went wrong.");
+    }
+  };
 
   const handleBackToAddVoucher = () => {
     navigation.navigate("addVoucher");
@@ -48,26 +82,15 @@ const GenerateVoucher = () => {
       <Text style={styles.title}>Voucher Successfully Generated!</Text>
       <Text style={styles.subtitle}>Scan or save the QR code below:</Text>
 
-     <View style={styles.qrContainer}>
-  {isLoading ? (
-    <LottieView
-      source={dotsLoader}
-      autoPlay
-      loop
-      style={{ width: 150, height: 150 }}
-    />
-  ) : showSuccess ? (
-    <LottieView
-      source={checkSuccess}
-      autoPlay
-      loop={false}
-      style={{ width: 150, height: 150 }}
-    />
-  ) : (
-    <QRCode value={qrValue} size={250} />
-  )}
-</View>
-
+      <View ref={qrRef} style={styles.qrContainer}>
+        {isLoading ? (
+          <LottieView source={dotsLoader} autoPlay loop style={{ width: 150, height: 150 }} />
+        ) : showSuccess ? (
+          <LottieView source={checkSuccess} autoPlay loop={false} style={{ width: 150, height: 150 }} />
+        ) : (
+          <QRCode value={qrValue} size={250} />
+        )}
+      </View>
 
       <Text style={styles.infoLabel}>Voucher Info:</Text>
       <Text style={styles.infoText}>Name: {generatedData.firstName} {generatedData.lastName}</Text>
@@ -76,10 +99,11 @@ const GenerateVoucher = () => {
       <Text style={styles.infoText}>Discount: {generatedData.discount}</Text>
       <Text style={styles.infoText}>Voucher Code: {generatedData.voucherCode}</Text>
 
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={handleBackToAddVoucher}
-      >
+      <TouchableOpacity style={styles.backButton} onPress={handleSendEmail}>
+        <Text style={styles.backButtonText}>Send QR Code via Email</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.backButton} onPress={handleBackToAddVoucher}>
         <Text style={styles.backButtonText}>Create Another Voucher</Text>
       </TouchableOpacity>
     </View>
