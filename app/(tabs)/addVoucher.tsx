@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 import {
   View,
   Text,
@@ -30,38 +31,35 @@ const AddVoucher = () => {
 
   const navigation = useNavigation();
 
-  // State to store form data
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     firstName: "",
     lastName: "",
     email: "",
     phoneNumber: "",
     discount: "",
     voucherCode: "",
-  });
+  };
 
-  // Reset form fields when the page gains focus
+  type FormErrors = {
+    [key in keyof typeof initialFormData]?: string;
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+
   useFocusEffect(
     React.useCallback(() => {
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phoneNumber: "",
-        discount: "",
-        voucherCode: "",
-      });
+      setFormData(initialFormData);
+      setFormErrors({});
     }, [])
   );
 
-
-  // Define form fields as an array
   const formFields = [
     { key: "firstName", label: "Recipient's First Name", placeholder: "Enter first name" },
     { key: "lastName", label: "Recipient's Last Name", placeholder: "Enter last name" },
     { key: "email", label: "Recipient's Email Address", placeholder: "Enter email address", keyboardType: "email-address" },
     { key: "phoneNumber", label: "Recipient's Phone Number", placeholder: "Enter phone number", keyboardType: "phone-pad" },
-    { key: "discount", label: "Recipient's Discount Benefit", placeholder: "Enter discount (e.g. 20%)" },
+    { key: "discount", label: "Recipient's Discount Benefit(%)", placeholder: "Enter discount (e.g. 20)" },
     { key: "voucherCode", label: "Atletika Event Voucher Code (ATK-XXX)", placeholder: "Enter the event's voucher code" },
   ];
 
@@ -75,23 +73,97 @@ const AddVoucher = () => {
     }
   }, [fontsLoaded]);
 
-  const handleGenerateVoucher = () => {
-    navigation.navigate("reviewVoucher", {
-      voucherData: formData,
-    });
-  };
-
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+
+    setFormErrors((prev) => ({
+      ...prev,
+      [field]: undefined,
+    }));
+  };
+
+  const handleGenerateVoucher = async () => {
+    const errors: FormErrors = {};
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const voucherCodeRegex = /^ATK-\d{3}$/;
+
+    // First name
+    if (!formData.firstName.trim()) {
+      errors.firstName = "First name is required.";
+    } else if (/\d/.test(formData.firstName)) {
+      errors.firstName = "First name should not contain numbers.";
+    }
+
+    // Last Name
+    if (!formData.lastName.trim()) {
+      errors.lastName = "Last name is required.";
+    } else if (/\d/.test(formData.lastName)) {
+      errors.lastName = "Last name should not contain numbers.";
+    }
+
+    // Emaeil
+    if (!formData.email.trim()) {
+      errors.email = "Email is required.";
+    } else if (!emailRegex.test(formData.email)) {
+      errors.email = "Please enter a valid email address.";
+    }
+
+    // hoe Number
+    if (!formData.phoneNumber.trim()) {
+      errors.phoneNumber = "Phone number is required.";
+    } else if (!/^\d+$/.test(formData.phoneNumber)) {
+      errors.phoneNumber = "Phone number must contain only digits.";
+    } else if (formData.phoneNumber.length < 10 || formData.phoneNumber.length > 13) {
+      errors.phoneNumber = "Phone number must be 10–13 digits.";
+    }
+
+    if (!formData.discount.trim()) {
+      errors.discount = "Discount is required.";
+    } else if (!/^\d+$/.test(formData.discount)) {
+      errors.discount = "Discount must be a number only (no %).";
+    } else {
+      const discountValue = parseInt(formData.discount, 10);
+      if (discountValue < 0 || discountValue > 100) {
+        errors.discount = "Discount must be between 0 and 100.";
+      }
+    }
+
+    // Voucher fode
+    if (!formData.voucherCode.trim()) {
+      errors.voucherCode = "Voucher code is required.";
+    } else if (!voucherCodeRegex.test(formData.voucherCode)) {
+      errors.voucherCode = "Voucher code must be in format ATK-XXX (e.g., ATK-123).";
+    } else {
+
+      const { data, error } = await supabase
+        .from("Events") 
+        .select("*")
+        .eq("id", formData.voucherCode.trim());
+
+      if (error) {
+        errors.voucherCode = "Error checking voucher code.";
+      } else if (!data || data.length === 0) {
+        errors.voucherCode = "Voucher code does not exist.";
+      }
+    }
+
+    setFormErrors(errors);
+
+    if (Object.keys(errors).length === 0) {
+      navigation.navigate("reviewVoucher", {
+        voucherData: formData,
+      });
+    }
   };
 
   if (!fontsLoaded) return null;
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
@@ -123,7 +195,7 @@ const AddVoucher = () => {
         </Text>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.formContainer}
         showsVerticalScrollIndicator={false}
@@ -131,25 +203,23 @@ const AddVoucher = () => {
         {formFields.map((field) => (
           <View key={field.key} style={styles.fieldContainer}>
             <Text style={styles.label}>{field.label}:</Text>
-            <TouchableOpacity
-              activeOpacity={1}
-              style={styles.inputTouchable}
-              onPress={() => {
-                // This empty onPress helps improve touchability
-              }}
-            >
-              <TextInput
-                style={styles.input}
-                placeholder={field.placeholder}
-                placeholderTextColor="#999"
-                value={formData[field.key]}
-                onChangeText={(text) => handleInputChange(field.key, text)}
-                keyboardType={field.keyboardType || "default"}
-              />
-            </TouchableOpacity>
+            <TextInput
+              style={[
+                styles.input,
+                formErrors[field.key] && { borderColor: "#FF3B30" },
+              ]}
+              placeholder={field.placeholder}
+              placeholderTextColor="#999"
+              value={formData[field.key]}
+              onChangeText={(text) => handleInputChange(field.key, text)}
+              keyboardType={field.keyboardType || "default"}
+            />
+            {formErrors[field.key] && (
+              <Text style={styles.errorText}>{formErrors[field.key]}</Text>
+            )}
           </View>
         ))}
-        
+
         <TouchableOpacity
           style={styles.generateButton}
           onPress={handleGenerateVoucher}
@@ -160,6 +230,7 @@ const AddVoucher = () => {
     </KeyboardAvoidingView>
   );
 };
+
 
 const { width, height } = Dimensions.get("window");
 
@@ -282,6 +353,12 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontFamily: "Manrope_700Bold",
     letterSpacing: -0.6,
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    fontFamily: "Manrope_400Regular",
   },
 });
 
