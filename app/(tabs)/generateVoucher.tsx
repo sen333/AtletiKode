@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ImageBackground } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import LottieView from "lottie-react-native";
@@ -189,7 +189,7 @@ const GenerateVoucher = () => {
         ) : showSuccess ? (
           <LottieView source={checkSuccess} autoPlay loop={false} style={{ width: 150, height: 150 }} />
         ) : (
-          <QRCode value={qrValue} size={250} />
+          <QRCode value={qrValue} size={200} />
         )}
       </View>
 
@@ -234,7 +234,7 @@ const GenerateVoucher = () => {
         >
           {/* QR overlay */}
           <View style={styles.qrOverlay}>
-            <QRCode value={qrValue} size={styles.qrOverlay.width} />
+            <QRCode value={qrValue} size={200} />
           </View>
           {/* Discount overlay */}
           <Text style={styles.discountOverlay}>{ticketInfo.discount}%</Text>
@@ -242,7 +242,7 @@ const GenerateVoucher = () => {
           <Text style={styles.codeOverlay}>{ticketInfo.ticketCode}</Text>
         </ImageBackground>
       )}
-      
+
     </View>
   );
 };
