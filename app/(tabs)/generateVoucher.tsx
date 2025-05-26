@@ -67,7 +67,6 @@ const GenerateVoucher = () => {
         .select(`
           VoucherID,
           EventID,
-          Vouchers (discount)
           Vouchers ( discount )
         `)
         .eq("VoucherID", generatedData.voucherID)
@@ -119,18 +118,38 @@ const GenerateVoucher = () => {
     return publicURL.publicUrl;
   };
 
+// Create a new ImageBackground component with the voucher layout
+  const voucherLayout = (
+    <ImageBackground
+      source={voucherLayoutSrc}
+      style={[styles.background, { transform: [{ scale: SCALE }] }]}
+      imageStyle={styles.backgroundImage}
+      collapsable={false}
+    >
+      {/* Overlay the QR code */}
+      <View style={[styles.qrOverlay, { transform: [{ scale: SCALE }] }]}>
+        <QRCode value={qrValue!} size={200} />
+      </View>
+      {/* Overlay the event ID */}
+      <Text style={[styles.eventOverlay, { transform: [{ scale: SCALE }] }]}>Event: {voucherInfo.eventID}</Text>
+      {/* Overlay the discount value */}
+      <Text style={[styles.discountOverlay, { transform: [{ scale: SCALE }] }]}>{voucherInfo.discount}%</Text>
+    </ImageBackground>
+  );
+
   // Capture the voucher layout (background + overlays) as a single image
   const generateVoucherImage = async (): Promise<string> => {
     if (!voucherInfo) {
       throw new Error("Voucher info not loaded yet.");
     }
 
-    // captureRef on the ImageBackground containing QR + discount + code
-    const base64 = await captureRef(ticketRef, {
-      format: "png",
-      quality: 1,
-      result: "base64",
-    });
+  // Capture the voucher layout as a single image
+  const base64 = await captureRef(voucherLayout, {
+    format: "png",
+    quality: 1,
+    result: "base64",
+  });
+
     if (!base64) throw new Error("Failed to capture ticket image.");
     return base64;
   };
@@ -141,8 +160,6 @@ const GenerateVoucher = () => {
 
       const base64Ticket = await generateVoucherImage();
 
-      if (!base64) {
-        throw new Error("Failed to capture QR code");
       if (!base64Ticket) {
         throw new Error("Failed to capture Voucher.");
       }
@@ -176,7 +193,6 @@ const GenerateVoucher = () => {
       const result = await response.json();
 
       if (result.success) {
-        showModal("Success", "QR code sent to the recipient's email.", true);
         showModal("Success", "AtletiKode Voucher has been sent to the recipient's email.", true);
       } else {
         showModal("Error", `Failed to send the QR code: ${result.error}`, false);
@@ -200,22 +216,9 @@ const GenerateVoucher = () => {
           <LottieView source={dotsLoader} autoPlay loop style={{ width: 150, height: 150 }} />
         ) : showSuccess ? (
           <LottieView source={checkSuccess} autoPlay loop={false} style={{ width: 150, height: 150 }} />
-        ) : (voucherInfo ? (
-          <ImageBackground
-            source={voucherLayoutSrc}
-            ref={ticketRef}
-            style={[styles.background, { transform: [{ scale: SCALE }] }]}
-            imageStyle={styles.backgroundImage}
-            collapsable={false}
-          >
-            <View style={[styles.qrOverlay, { transform: [{ scale: SCALE }] }]}>  
-              <QRCode value={qrValue!} size={200} />
-            </View>
-            <Text style={[styles.discountOverlay, { transform: [{ scale: SCALE }] }]}>{voucherInfo.discount}%</Text>
-            <Text style={[styles.codeOverlay, { transform: [{ scale: SCALE }] }]}>{voucherInfo.voucherID}</Text>
-            <Text style={[styles.eventOverlay, { transform: [{ scale: SCALE }] }]}>Event: {voucherInfo.eventID}</Text>
-          </ImageBackground>
-        ) : null}
+        ) : (
+          voucherLayout
+        )}
       </View>
 
       <Text style={styles.infoLabel}>Voucher Info:</Text>
@@ -391,7 +394,7 @@ const styles = StyleSheet.create({
     fontFamily: "WixMadeforDisplay_800ExtraBold",
     color: "#FFAF22",
   },
-  codeOverlay: {
+  eventOverlay: {
     position: "absolute",
     top: 230,
     left: 3240,
