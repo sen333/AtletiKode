@@ -68,6 +68,7 @@ const GenerateVoucher = () => {
           VoucherID,
           EventID,
           Vouchers (discount)
+          Vouchers ( discount )
         `)
         .eq("VoucherID", generatedData.voucherID)
         .single();
@@ -142,6 +143,8 @@ const GenerateVoucher = () => {
 
       if (!base64) {
         throw new Error("Failed to capture QR code");
+      if (!base64Ticket) {
+        throw new Error("Failed to capture Voucher.");
       }
 
       const fileName = `${voucherInfo.voucherID}-${Date.now()}`;
@@ -174,6 +177,7 @@ const GenerateVoucher = () => {
 
       if (result.success) {
         showModal("Success", "QR code sent to the recipient's email.", true);
+        showModal("Success", "AtletiKode Voucher has been sent to the recipient's email.", true);
       } else {
         showModal("Error", `Failed to send the QR code: ${result.error}`, false);
       }
@@ -359,6 +363,41 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: 'bold',
     fontFamily: 'Manrope_700Bold',
+  },
+  ticketContainer: {
+    position: "absolute",
+    top: -9999,
+    left: -9999,
+    width: TEMPLATE_WIDTH,
+    height: TEMPLATE_HEIGHT,
+  },
+  ticketImage: {
+    resizeMode: "contain",
+  },
+  qrOverlay: {
+    position: "absolute",
+    top: 296,
+    left: 3242,
+    width: 200,
+    height: 200,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  discountOverlay: {
+    position: "absolute",
+    top: 1250,
+    left: 3230,
+    fontSize: 49,
+    fontFamily: "WixMadeforDisplay_800ExtraBold",
+    color: "#FFAF22",
+  },
+  codeOverlay: {
+    position: "absolute",
+    top: 230,
+    left: 3240,
+    fontSize: 20,
+    fontFamily: "WixMadeforDisplay_500Medium",
+    color: "#FFFFFF",
   },
 });
 
