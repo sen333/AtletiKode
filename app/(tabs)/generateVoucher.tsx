@@ -110,7 +110,7 @@ const GenerateVoucher = () => {
     return publicURL.publicUrl;
   };
 
-  // Capture the ticket layout (background + overlays) as a single image
+  // Capture the voucher layout (background + overlays) as a single image
   const generateTicketImage = async (): Promise<string> => {
     if (!ticketInfo) {
       throw new Error("Ticket info not loaded yet.");
@@ -137,7 +137,7 @@ const GenerateVoucher = () => {
       }
 
       const fileName = `${generatedData.voucherID}-${Date.now()}`;
-      const imageUrl = await uploadQRImage(base64, fileName);
+      const imageUrl = await uploadQRImage(base64Ticket, fileName);
 
       const payload = {
         email: generatedData.email,
@@ -222,6 +222,27 @@ const GenerateVoucher = () => {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* Voucher Layout with overlays */}
+      {ticketInfo && (
+        <ImageBackground
+          source={voucherLayoutSrc}
+          ref={ticketRef}
+          style={styles.ticketContainer}
+          imageStyle={styles.ticketImage}
+          collapsable={false}
+        >
+          {/* QR overlay */}
+          <View style={styles.qrOverlay}>
+            <QRCode value={qrValue} size={styles.qrOverlay.width} />
+          </View>
+          {/* Discount overlay */}
+          <Text style={styles.discountOverlay}>{ticketInfo.discount}%</Text>
+          {/* Code overlay */}
+          <Text style={styles.codeOverlay}>{ticketInfo.ticketCode}</Text>
+        </ImageBackground>
+      )}
+      
     </View>
   );
 };
