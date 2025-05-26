@@ -15,6 +15,7 @@ const voucherLayoutSrc = require("../../assets/images/voucherLayout.png");
 // Voucher Layout Dimensions
 const TEMPLATE_WIDTH = 4300;  // voucher layout width
 const TEMPLATE_HEIGHT = 1604; // voucher layout height
+const SCALE = (Dimensions.get("window").width * 0.8) / TEMPLATE_WIDTH;
 
 const GenerateVoucher = () => {
   const route = useRoute();
@@ -31,9 +32,10 @@ const GenerateVoucher = () => {
   const [isSuccess, setIsSuccess] = useState(true);
 
   // Supabase‐fetched ticket info
-  const [ticketInfo, setTicketInfo] = useState<{
-    discount: number;
-    ticketCode: string;
+  const [voucherInfo, setVoucherInfo] = useState<{
+    voucherID: string;
+    eventID:   string;
+    discount:  number;
   } | null>(null);
 
   // Refs for capturing views
@@ -58,30 +60,36 @@ const GenerateVoucher = () => {
       setTimeout(() => setShowSuccess(false), 2200);
     }, 4000);
 
-    // Fetch discount & ticket code from Supabase
-    const fetchTicketInfo = async () => {
+    // Fetch voucherID, eventID & discount in one call
+    const fetchVoucherInfo = async () => {
       const { data, error } = await supabase
-        .from("tickets")
-        .select("discount, ticket_code")
-        .eq("voucherID", generatedData.voucherID)
+        .from("ReleasedVoucher")
+        .select(`
+          VoucherID,
+          EventID,
+          Vouchers (discount)
+        `)
+        .eq("VoucherID", generatedData.voucherID)
         .single();
 
-      if (error) {
-        console.error("Error fetching ticket info:", error);
+      if (error || !data) {
+        console.error("Error fetching voucher info:", error);
         showModal(
           "Error",
-          "Could not load ticket details. Please try again later.",
+          "Could not load voucher details. Please try again later.",
           false
         );
         return;
       }
-      setTicketInfo({
-        discount: data.discount,
-        ticketCode: data.ticket_code,
+
+      setVoucherInfo({
+        voucherID: data.VoucherID,
+        eventID:   data.EventID,
+        discount:  data.Vouchers.discount,
       });
     };
 
-    fetchTicketInfo();
+    fetchVoucherInfo();
 
     return () => clearTimeout(timer);
   }, []);
@@ -111,9 +119,9 @@ const GenerateVoucher = () => {
   };
 
   // Capture the voucher layout (background + overlays) as a single image
-  const generateTicketImage = async (): Promise<string> => {
-    if (!ticketInfo) {
-      throw new Error("Ticket info not loaded yet.");
+  const generateVoucherImage = async (): Promise<string> => {
+    if (!voucherInfo) {
+      throw new Error("Voucher info not loaded yet.");
     }
 
     // captureRef on the ImageBackground containing QR + discount + code
@@ -130,13 +138,13 @@ const GenerateVoucher = () => {
     try {
       showModal("Sending...", "Preparing to send your QR code via email.");
 
-      const base64Ticket = await generateTicketImage();
+      const base64Ticket = await generateVoucherImage();
 
       if (!base64Ticket) {
         throw new Error("Failed to capture Voucher.");
       }
 
-      const fileName = `${generatedData.voucherID}-${Date.now()}`;
+      const fileName = `${voucherInfo.voucherID}-${Date.now()}`;
       const imageUrl = await uploadQRImage(base64Ticket, fileName);
 
       const payload = {
@@ -188,17 +196,30 @@ const GenerateVoucher = () => {
           <LottieView source={dotsLoader} autoPlay loop style={{ width: 150, height: 150 }} />
         ) : showSuccess ? (
           <LottieView source={checkSuccess} autoPlay loop={false} style={{ width: 150, height: 150 }} />
-        ) : (
-          <QRCode value={qrValue} size={200} />
-        )}
+        ) : (voucherInfo ? (
+          <ImageBackground
+            source={voucherLayoutSrc}
+            ref={ticketRef}
+            style={[styles.background, { transform: [{ scale: SCALE }] }]}
+            imageStyle={styles.backgroundImage}
+            collapsable={false}
+          >
+            <View style={[styles.qrOverlay, { transform: [{ scale: SCALE }] }]}>  
+              <QRCode value={qrValue!} size={200} />
+            </View>
+            <Text style={[styles.discountOverlay, { transform: [{ scale: SCALE }] }]}>{voucherInfo.discount}%</Text>
+            <Text style={[styles.codeOverlay, { transform: [{ scale: SCALE }] }]}>{voucherInfo.voucherID}</Text>
+            <Text style={[styles.eventOverlay, { transform: [{ scale: SCALE }] }]}>Event: {voucherInfo.eventID}</Text>
+          </ImageBackground>
+        ) : null}
       </View>
 
       <Text style={styles.infoLabel}>Voucher Info:</Text>
       <Text style={styles.infoText}>Name: {generatedData.firstName} {generatedData.lastName}</Text>
       <Text style={styles.infoText}>Email: {generatedData.email}</Text>
       <Text style={styles.infoText}>Phone: {generatedData.phoneNumber}</Text>
-      <Text style={styles.infoText}>Discount: {generatedData.discount}</Text>
-      <Text style={styles.infoText}>Voucher Code: {generatedData.voucherCode}</Text>
+      <Text style={styles.infoText}>Discount: {voucherInfo.discount}</Text>
+      <Text style={styles.infoText}>Voucher Code: {voucherInfo.voucherID}</Text>
 
       <TouchableOpacity style={styles.backButton} onPress={handleSendEmail}>
         <Text style={styles.backButtonText}>Send QR Code via Email</Text>
@@ -224,7 +245,7 @@ const GenerateVoucher = () => {
       </Modal>
 
       {/* Voucher Layout with overlays */}
-      {ticketInfo && (
+      {voucherInfo && (
         <ImageBackground
           source={voucherLayoutSrc}
           ref={ticketRef}
@@ -237,9 +258,9 @@ const GenerateVoucher = () => {
             <QRCode value={qrValue} size={200} />
           </View>
           {/* Discount overlay */}
-          <Text style={styles.discountOverlay}>{ticketInfo.discount}%</Text>
+          <Text style={styles.discountOverlay}>{voucherInfo.discount}%</Text>
           {/* Code overlay */}
-          <Text style={styles.codeOverlay}>{ticketInfo.ticketCode}</Text>
+          <Text style={styles.codeOverlay}>{voucherInfo.eventID}</Text>
         </ImageBackground>
       )}
 
