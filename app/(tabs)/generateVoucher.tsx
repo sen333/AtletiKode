@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ImageBackground } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import LottieView from "lottie-react-native";
@@ -10,6 +10,11 @@ import { Buffer } from "buffer";
 
 const dotsLoader = require("../../assets/animations/dots-loader.json");
 const checkSuccess = require("../../assets/animations/check-success.json");
+const voucherLayoutSrc = require("../../assets/images/voucherLayout.png");
+
+// Voucher Layout Dimensions
+const TEMPLATE_WIDTH = 4300;  // voucher layout width
+const TEMPLATE_HEIGHT = 1604; // voucher layout height
 
 const GenerateVoucher = () => {
   const route = useRoute();
@@ -24,6 +29,15 @@ const GenerateVoucher = () => {
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [isSuccess, setIsSuccess] = useState(true);
+
+  // Supabase‐fetched ticket info
+  const [ticketInfo, setTicketInfo] = useState<{
+    discount: number;
+    ticketCode: string;
+  } | null>(null);
+
+  // Refs for capturing views
+  const ticketRef = useRef<View>(null);
 
   const qrValue = JSON.stringify({
     customerID: generatedData.customerID,
@@ -43,6 +57,32 @@ const GenerateVoucher = () => {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2200);
     }, 4000);
+
+    // Fetch discount & ticket code from Supabase
+    const fetchTicketInfo = async () => {
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("discount, ticket_code")
+        .eq("voucherID", generatedData.voucherID)
+        .single();
+
+      if (error) {
+        console.error("Error fetching ticket info:", error);
+        showModal(
+          "Error",
+          "Could not load ticket details. Please try again later.",
+          false
+        );
+        return;
+      }
+      setTicketInfo({
+        discount: data.discount,
+        ticketCode: data.ticket_code,
+      });
+    };
+
+    fetchTicketInfo();
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -70,22 +110,34 @@ const GenerateVoucher = () => {
     return publicURL.publicUrl;
   };
 
+  // Capture the voucher layout (background + overlays) as a single image
+  const generateTicketImage = async (): Promise<string> => {
+    if (!ticketInfo) {
+      throw new Error("Ticket info not loaded yet.");
+    }
+
+    // captureRef on the ImageBackground containing QR + discount + code
+    const base64 = await captureRef(ticketRef, {
+      format: "png",
+      quality: 1,
+      result: "base64",
+    });
+    if (!base64) throw new Error("Failed to capture ticket image.");
+    return base64;
+  };
+
   const handleSendEmail = async () => {
     try {
       showModal("Sending...", "Preparing to send your QR code via email.");
 
-      const base64 = await captureRef(qrRef, {
-        format: "png",
-        quality: 1,
-        result: "base64",
-      });
+      const base64Ticket = await generateTicketImage();
 
-      if (!base64) {
-        throw new Error("Failed to capture QR code");
+      if (!base64Ticket) {
+        throw new Error("Failed to capture Voucher.");
       }
 
       const fileName = `${generatedData.voucherID}-${Date.now()}`;
-      const imageUrl = await uploadQRImage(base64, fileName);
+      const imageUrl = await uploadQRImage(base64Ticket, fileName);
 
       const payload = {
         email: generatedData.email,
@@ -113,7 +165,7 @@ const GenerateVoucher = () => {
       const result = await response.json();
 
       if (result.success) {
-        showModal("Success", "QR code sent to the recipient's email.", true);
+        showModal("Success", "AtletiKode Voucher has been sent to the recipient's email.", true);
       } else {
         showModal("Error", `Failed to send the QR code: ${result.error}`, false);
       }
@@ -137,7 +189,7 @@ const GenerateVoucher = () => {
         ) : showSuccess ? (
           <LottieView source={checkSuccess} autoPlay loop={false} style={{ width: 150, height: 150 }} />
         ) : (
-          <QRCode value={qrValue} size={250} />
+          <QRCode value={qrValue} size={200} />
         )}
       </View>
 
@@ -170,6 +222,27 @@ const GenerateVoucher = () => {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* Voucher Layout with overlays */}
+      {ticketInfo && (
+        <ImageBackground
+          source={voucherLayoutSrc}
+          ref={ticketRef}
+          style={styles.ticketContainer}
+          imageStyle={styles.ticketImage}
+          collapsable={false}
+        >
+          {/* QR overlay */}
+          <View style={styles.qrOverlay}>
+            <QRCode value={qrValue} size={200} />
+          </View>
+          {/* Discount overlay */}
+          <Text style={styles.discountOverlay}>{ticketInfo.discount}%</Text>
+          {/* Code overlay */}
+          <Text style={styles.codeOverlay}>{ticketInfo.ticketCode}</Text>
+        </ImageBackground>
+      )}
+
     </View>
   );
 };
@@ -265,6 +338,41 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: 'bold',
     fontFamily: 'Manrope_700Bold',
+  },
+  ticketContainer: {
+    position: "absolute",
+    top: -9999,
+    left: -9999,
+    width: TEMPLATE_WIDTH,
+    height: TEMPLATE_HEIGHT,
+  },
+  ticketImage: {
+    resizeMode: "contain",
+  },
+  qrOverlay: {
+    position: "absolute",
+    top: 296,
+    left: 3242,
+    width: 200,
+    height: 200,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  discountOverlay: {
+    position: "absolute",
+    top: 1250,
+    left: 3230,
+    fontSize: 49,
+    fontFamily: "WixMadeforDisplay_800ExtraBold",
+    color: "#FFAF22",
+  },
+  codeOverlay: {
+    position: "absolute",
+    top: 230,
+    left: 3240,
+    fontSize: 20,
+    fontFamily: "WixMadeforDisplay_500Medium",
+    color: "#FFFFFF",
   },
 });
 
