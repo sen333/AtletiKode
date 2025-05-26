@@ -7,6 +7,9 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  Alert,
+  Modal,
+  TextInput,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -20,7 +23,7 @@ import { supabase } from "../lib/supabase";
 
 SplashScreen.preventAutoHideAsync();
 
-const EventCard = ({ event }) => (
+const EventCard = ({ event, onDelete }) => (
   <View style={styles.card}>
     <View>
       <Text style={styles.eventCode}>{event.id}</Text>
@@ -32,7 +35,7 @@ const EventCard = ({ event }) => (
         <Text style={styles.voucherLabel}>Released Vouchers</Text>
       </View>
     </View>
-    <TouchableOpacity>
+    <TouchableOpacity onPress={() => onDelete(event)}>
       <Feather name="trash-2" size={24} color="gray" style={styles.trashIcon} />
     </TouchableOpacity>
   </View>
@@ -44,6 +47,10 @@ const explore = () => {
     Manrope_700Bold,
   });
   const [events, setEvents] = useState<any[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventToDelete, setEventToDelete] = useState<any>(null);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -53,37 +60,136 @@ const explore = () => {
   }, [fontsLoaded]);
 
   const loadEvents = async () => {
-    // Fetch released vouchers with event info
-    const { data: vouchers, error } = await supabase
-      .from("ReleasedVoucher")
-      .select("*, Vouchers(*)");
 
-    if (error) {
-      console.log("Error fetching vouchers:", error);
+    const { data: eventsData, error: eventsError } = await supabase
+      .from("Events")
+      .select("*");
+
+    if (eventsError) {
+      console.log("Error fetching events:", eventsError);
       return;
     }
 
-    // Group by event
-    const eventMap: Record<string, any> = {};
-    vouchers.forEach((voucher: any) => {
-      const eventId = voucher.Vouchers?.EventID || "Unknown";
-      const eventTitle = voucher.Vouchers?.EventTitle || "EVENT TITLE";
-      if (!eventMap[eventId]) {
-        eventMap[eventId] = {
-          id: eventId,
-          title: eventTitle,
-          totalVouchers: 0,
-        };
+    const { data: releasedVouchers, error: vouchersError } = await supabase
+      .from("ReleasedVoucher")
+      .select("EventID");
+
+    if (vouchersError) {
+      console.log("Error fetching released vouchers:", vouchersError);
+      return;
+    }
+
+    const voucherCountMap: Record<string, number> = {};
+    releasedVouchers.forEach((voucher: any) => {
+      const eventId = voucher.EventID;
+      if (eventId) {
+        voucherCountMap[eventId] = (voucherCountMap[eventId] || 0) + 1;
       }
-      eventMap[eventId].totalVouchers += 1;
     });
 
-      const grouped = Object.values(eventMap).map((event, i) => ({
-    ...event,
-    id: `ATK-00${i + 1}`,
-  }));
+    const eventsWithVouchers = eventsData.map((event: any) => ({
+      id: event.id,
+      title: event.Title,
+      totalVouchers: voucherCountMap[event.id] || 0,
+    }));
 
-  setEvents(grouped);
+    setEvents(eventsWithVouchers);
+  };
+
+  const handleAddEvent = () => {
+    setEventTitle("");
+    setShowAddModal(true);
+  };
+
+  const confirmAddEvent = async () => {
+    if (eventTitle.trim()) {
+      await addEventToDatabase(eventTitle.trim());
+      setShowAddModal(false);
+      setEventTitle("");
+    }
+  };
+
+  const addEventToDatabase = async (title: string) => {
+    try {
+      const { data: existingEvents, error: fetchError } = await supabase
+        .from("Events")
+        .select("id")
+        .order("id", { ascending: false });
+
+      if (fetchError) {
+        console.error("Error fetching existing events:", fetchError);
+        Alert.alert("Error", "Failed to add event. Please try again.");
+        return;
+      }
+
+      let nextNumber = 1;
+      if (existingEvents && existingEvents.length > 0) {
+
+        const numbers = existingEvents
+          .map(event => {
+            const match = event.id.match(/ATK-(\d+)/);
+            return match ? parseInt(match[1]) : 0;
+          })
+          .filter(num => num > 0);
+        
+        if (numbers.length > 0) {
+          nextNumber = Math.max(...numbers) + 1;
+        }
+      }
+
+      const nextId = `ATK-${nextNumber.toString().padStart(Math.max(3, nextNumber.toString().length), '0')}`;
+
+      const { data, error } = await supabase
+        .from("Events")
+        .insert([{ id: nextId, Title: title }])
+        .select();
+
+      if (error) {
+        console.error("Error adding event:", error);
+        Alert.alert("Error", "Failed to add event. Please try again.");
+        return;
+      }
+
+      if (data && data.length > 0) {
+        loadEvents();
+      }
+    } catch (error) {
+      console.error("Error adding event:", error);
+      Alert.alert("Error", "Failed to add event. Please try again.");
+    }
+  };
+
+  const handleDeleteEvent = (event: any) => {
+    setEventToDelete(event);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (eventToDelete) {
+      await deleteEventFromDatabase(eventToDelete.id);
+      setShowDeleteModal(false);
+      setEventToDelete(null);
+    }
+  };
+
+  const deleteEventFromDatabase = async (eventId: string) => {
+    try {
+      const { error } = await supabase
+        .from("Events")
+        .delete()
+        .eq("id", eventId);
+
+      if (error) {
+        console.error("Error deleting event:", error);
+        Alert.alert("Error", "Failed to delete event. Please try again.");
+        return;
+      }
+
+      loadEvents();
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      Alert.alert("Error", "Failed to delete event. Please try again.");
+    }
   };
 
   if (!fontsLoaded) {
@@ -92,7 +198,7 @@ const explore = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header with Gradient */}
+
       <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
         <View style={styles.headerContent}>
           <Image
@@ -108,26 +214,99 @@ const explore = () => {
         </View>
       </LinearGradient>
 
-      {/* Distributed Vouchers Heading */}
+      {/* distributed vouchers heading */}
       <View style={styles.sectionTitleContainer}>
         <Text style={styles.sectionTitle}>Event Vouchers</Text>
       </View>
 
       <View style={styles.horizontalLine} />
 
-      {/* Event List */}
+      {/* event list */}
       <FlatList
         data={events}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <EventCard event={item} />}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <EventCard event={item} onDelete={handleDeleteEvent} />
+        )}
+        showsVerticalScrollIndicator={false}
       />
+
+      {/* add event button fixed sa bottom */}
+      <TouchableOpacity style={styles.floatingAddButton} onPress={handleAddEvent}>
+        <Feather name="plus" size={24} color="#fff" />
+      </TouchableOpacity>
+
+      {/* add event to */}
+      <Modal
+        visible={showAddModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Event</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Enter event title"
+              value={eventTitle}
+              onChangeText={setEventTitle}
+              autoFocus={true}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowAddModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.addButton]}
+                onPress={confirmAddEvent}
+              >
+                <Text style={styles.addButtonText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* delit  */}
+      <Modal
+        visible={showDeleteModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Delete Event</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to delete "{eventToDelete?.title}"?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.deleteButton]}
+                onPress={confirmDeleteEvent}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
 const { width, height } = Dimensions.get("window");
 const styles = StyleSheet.create({
-  // ...existing styles...
   container: { flex: 1, backgroundColor: "#F8F8F8" },
   header: {
     height: height * 0.16,
@@ -205,11 +384,13 @@ const styles = StyleSheet.create({
   eventCode: {
     fontSize: width * 0.03,
     color: "#13390B",
+    fontFamily: "Manrope_400Regular",
   },
   eventTitle: {
     fontSize: width * 0.045,
     fontWeight: "bold",
     color: "#13390B",
+    fontFamily: "Manrope_700Bold",
   },
   rightSection: {
     flexDirection: "row",
@@ -229,6 +410,102 @@ const styles = StyleSheet.create({
   },
   trashIcon: {
     marginLeft: 10,
+  },
+  floatingAddButton: {
+    position: "absolute",
+    bottom: 30,
+    right: 30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#13390B",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    width: "85%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: width * 0.05,
+    fontWeight: "bold",
+    color: "#13390B",
+    textAlign: "center",
+    marginBottom: 15,
+    fontFamily: "Manrope_700Bold",
+  },
+  modalMessage: {
+    fontSize: width * 0.04,
+    color: "#13390B",
+    textAlign: "center",
+    marginBottom: 20,
+    fontFamily: "Manrope_400Regular",
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#13390B",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: width * 0.04,
+    marginBottom: 20,
+    fontFamily: "Manrope_400Regular",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#f0f0f0",
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+  cancelButtonText: {
+    color: "#666",
+    fontWeight: "bold",
+    fontSize: width * 0.04,
+    fontFamily: "Manrope_700Bold",
+  },
+  addButton: {
+    backgroundColor: "#13390B",
+  },
+  addButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: width * 0.04,
+    fontFamily: "Manrope_700Bold",
+  },
+  deleteButton: {
+    backgroundColor: "#63120E",
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: width * 0.04,
+    fontFamily: "Manrope_700Bold",
   },
 });
 
