@@ -1,29 +1,29 @@
-import {
-  Manrope_400Regular,
-  Manrope_700Bold,
-  useFonts,
-} from "@expo-google-fonts/manrope";
-import Feather from "@expo/vector-icons/Feather";
-import { LinearGradient } from "expo-linear-gradient";
-import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
-  Dimensions,
-  FlatList,
-  Image,
-  Modal,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
   View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+  Alert,
+  Modal,
+  TextInput,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  useFonts,
+  Manrope_400Regular,
+  Manrope_700Bold,
+} from "@expo-google-fonts/manrope";
+import * as SplashScreen from "expo-splash-screen";
+import Feather from "@expo/vector-icons/Feather";
 import { supabase } from "../lib/supabase";
 
 SplashScreen.preventAutoHideAsync();
 
-const EventCard = ({ event, onDelete }: { event: { id: string; title: string; totalVouchers: number }; onDelete: (event: { id: string; title: string; totalVouchers: number }) => void }) => (
+const EventCard = ({ event, onDelete }) => (
   <View style={styles.card}>
     <View style={styles.leftSection}>
       <Text style={styles.eventCode}>{event.id}</Text>
@@ -41,7 +41,7 @@ const EventCard = ({ event, onDelete }: { event: { id: string; title: string; to
   </View>
 );
 
-const Explore = () => {
+const explore = () => {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
@@ -514,4 +514,4 @@ floatingAddButton: {
   },
 });
 
-export default Explore;
+export default explore;

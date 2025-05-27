@@ -4,7 +4,7 @@ import {
   useRoute,
 } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamList } from "../../constants/types"; // adjust if path differs
+import { RootStackParamList } from "../../constants/types";
 
 import { Buffer } from "buffer";
 import LottieView from "lottie-react-native";
@@ -38,6 +38,7 @@ const GenerateVoucher = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const qrRef = useRef(null);
+  const [isAnimationComplete, setIsAnimationComplete] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
@@ -56,14 +57,28 @@ const GenerateVoucher = () => {
     voucherCode: generatedData.voucherCode,
   });
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, []);
+useEffect(() => {
+  // Reset states
+  setIsLoading(true);
+  setShowSuccess(false);
+  setIsAnimationComplete(false);
+
+  // Show dots loader for 2 seconds
+  const loaderTimer = setTimeout(() => {
+    setIsLoading(false);
+    setShowSuccess(true);
+    
+    // Show success animation for 1.5 seconds
+    const successTimer = setTimeout(() => {
+      setShowSuccess(false);
+      setIsAnimationComplete(true);
+    }, 5000);
+    
+    return () => clearTimeout(successTimer);
+  }, 3000);
+  
+  return () => clearTimeout(loaderTimer);
+}, []);
 
   const showModal = (title: string, message: string, success: boolean = true) => {
     setModalTitle(title);
@@ -146,21 +161,38 @@ const GenerateVoucher = () => {
         <Text style={styles.subtitle}>Scan or save the QR code below:</Text>
 
         <View ref={qrRef} collapsable={false} style={styles.voucherWrapper}>
-          <ImageBackground source={voucherTemplate} style={styles.voucherImage} resizeMode="contain">
-            {isLoading ? (
-              <LottieView source={dotsLoader} autoPlay loop style={{ width: 60, height: 60 }} />
-            ) : showSuccess ? (
-              <LottieView source={checkSuccess} autoPlay loop={false} style={{ width: 60, height: 60 }} />
-            ) : (
-              <>
-                <View style={styles.qrCodeBox}>
-                  <QRCode value={qrValue} size={58} />
-                </View>
-                <Text style={styles.percentageText}>{generatedData.discount}% OFF</Text>
-                <Text style={styles.voucherCodeTop}>{generatedData.voucherCode}</Text>
-              </>
-            )}
-          </ImageBackground>
+         <ImageBackground source={voucherTemplate} style={styles.voucherImage} resizeMode="contain">
+  {isLoading ? (
+    <View style={styles.animationContainer}>
+      <LottieView 
+        source={dotsLoader} 
+        autoPlay 
+        loop 
+        speed={0.7}
+        style={styles.animation}
+      />
+    </View>
+  ) : showSuccess ? (
+    <View style={styles.animationContainer}>
+      <LottieView 
+        source={checkSuccess} 
+        autoPlay 
+        loop={false}
+        speed={0.6}
+        style={[styles.animation, { width: 100, height: 100 }]}
+        // Removed onAnimationFinish to avoid double state changes
+      />
+    </View>
+  ) : isAnimationComplete ? (
+    <>
+      <View style={styles.qrCodeBox}>
+        <QRCode value={qrValue} size={58} />
+      </View>
+      <Text style={styles.percentageText}>{generatedData.discount}% OFF</Text>
+      <Text style={styles.voucherCodeTop}>{generatedData.voucherCode}</Text>
+    </>
+  ) : null}
+</ImageBackground>
         </View>
 
         <Text style={styles.infoLabel}>Voucher Info:</Text>
@@ -261,6 +293,7 @@ const styles = StyleSheet.create({
     fontSize: 7,
     fontWeight: "bold",
     fontFamily: "Manrope_700Bold",
+    letterSpacing: 1,
   },
   infoLabel: {
     fontSize: width * 0.045,
@@ -321,6 +354,20 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontWeight: "bold",
     fontFamily: "Manrope_700Bold",
+  },
+  animationContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  animation: {
+    width: 100,
+    height: 100,
   },
 });
 
