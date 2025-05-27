@@ -21,17 +21,22 @@
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
   },
-"cSpell.words": [
-  "supabase",
-  "SUPABASE",
-  "qrcode",
-  "AtletiKode",
-  "Atletika",
-  "delit",
-  "generateVoucher",
-  "Manrope",
-  "QRCode",
-  "LottieView",
-  "addVoucher",
-]
+  "cSpell.words": [
+    "supabase",
+    "SUPABASE",
+    "qrcode",
+    "AtletiKode",
+    "Atletika",
+    "delit",
+    "generateVoucher",
+    "Manrope",
+    "QRCode",
+    "LottieView",
+    "addVoucher"
+  ],
+  "java.project.sourcePaths": [],
+  "java.project.referencedLibraries": [],
+  "files.exclude": {
+    "**/node_modules": true
+  }
 }

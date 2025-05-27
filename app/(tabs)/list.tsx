@@ -3,9 +3,12 @@
 import { Manrope_400Regular, Manrope_700Bold, useFonts } from "@expo-google-fonts/manrope";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { LinearGradient } from "expo-linear-gradient";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
+import { ReleasedVoucher, RootStackParamList } from '../../constants/types';
+
 import {
   ActivityIndicator,
   Dimensions,
@@ -25,13 +28,11 @@ import { supabase } from "../lib/supabase";
 const voucherTemplate = require("../../assets/images/New.png");
 SplashScreen.preventAutoHideAsync();
 
-const List = () => {
-  const [fontsLoaded] = useFonts({
-    Manrope_400Regular,
-    Manrope_700Bold,
-  });
+type ListScreenNavigationProp = StackNavigationProp<RootStackParamList, "addVoucher">;
 
-  const navigation = useNavigation();
+const List = () => {
+  const navigation = useNavigation<ListScreenNavigationProp>();
+  const [fontsLoaded] = useFonts({ Manrope_400Regular, Manrope_700Bold });
   const [vouchers, setVouchers] = useState<ReleasedVoucher[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVoucher, setSelectedVoucher] = useState<ReleasedVoucher | null>(null);
@@ -101,8 +102,8 @@ const List = () => {
   };
 
   const renderVoucherItem = ({ item }: { item: ReleasedVoucher }) => {
-    const customer = item.Customers;
-    const voucher = item.Vouchers;
+    const customer = Array.isArray(item.Customers) ? item.Customers[0] : item.Customers;
+    const voucher = Array.isArray(item.Vouchers) ? item.Vouchers[0] : item.Vouchers;
     if (!customer || !voucher) return null;
 
     return (
@@ -111,8 +112,7 @@ const List = () => {
           <Text style={styles.voucherName}>{customer.FirstName} {customer.LastName}</Text>
           <View style={[styles.statusBadge, {
             backgroundColor: voucher.Status === "Claimed" ? "#4CAF50" : voucher.Status === "Unclaimed" ? "#FF9800" : "#F44336",
-          }]}>
-            <Text style={styles.statusText}>{voucher.Status}</Text>
+          }]}> <Text style={styles.statusText}>{voucher.Status}</Text>
           </View>
         </View>
         <View style={styles.voucherDetails}>
@@ -162,7 +162,7 @@ const List = () => {
         />
       )}
 
-      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("addVoucher")}>
+      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("addVoucher")}> 
         <Feather name="plus" size={24} color="#FFF" />
       </TouchableOpacity>
 
@@ -170,32 +170,34 @@ const List = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Voucher QR Code</Text>
-            {selectedVoucher && (
-              <>
-                <View style={styles.modalDetails}>
-                  <Text style={styles.modalName}>{selectedVoucher.Customers.FirstName} {selectedVoucher.Customers.LastName}</Text>
-                  <Text style={styles.modalEmail}>{selectedVoucher.Customers.Email}</Text>
-                  <Text style={styles.modalPhone}>{selectedVoucher.Customers.ContactNumber}</Text>
-                  <Text style={styles.modalDiscount}>Discount: {selectedVoucher.Vouchers.Discount}% OFF</Text>
-                  <Text style={styles.modalEvent}>Event: {selectedVoucher.EventID ?? "N/A"}</Text>
-                  <View style={[styles.modalStatusBadge, {
-                    backgroundColor: selectedVoucher.Vouchers.Status === "Claimed" ? "#4CAF50" : "#FF9800"
-                  }]}>
-                    <Text style={styles.modalStatusText}>{selectedVoucher.Vouchers.Status}</Text>
+            {selectedVoucher && (() => {
+              const customer = Array.isArray(selectedVoucher.Customers) ? selectedVoucher.Customers[0] : selectedVoucher.Customers;
+              const voucher = Array.isArray(selectedVoucher.Vouchers) ? selectedVoucher.Vouchers[0] : selectedVoucher.Vouchers;
+              return (
+                <>
+                  <View style={styles.modalDetails}>
+                    <Text style={styles.modalName}>{customer.FirstName} {customer.LastName}</Text>
+                    <Text style={styles.modalEmail}>{customer.Email}</Text>
+                    <Text style={styles.modalPhone}>{customer.ContactNumber}</Text>
+                    <Text style={styles.modalDiscount}>Discount: {voucher.Discount}% OFF</Text>
+                    <Text style={styles.modalEvent}>Event: {selectedVoucher.EventID ?? "N/A"}</Text>
+                    <View style={[styles.modalStatusBadge, {
+                      backgroundColor: voucher.Status === "Claimed" ? "#4CAF50" : "#FF9800"
+                    }]}> <Text style={styles.modalStatusText}>{voucher.Status}</Text></View>
                   </View>
-                </View>
 
-                <View style={styles.voucherWrapper}>
-                  <ImageBackground source={voucherTemplate} style={styles.voucherImage} resizeMode="contain">
-                    <View style={styles.qrCodeBox}>
-                      <QRCode value={qrData} size={58} />
-                    </View>
-                    <Text style={styles.percentageText}>{selectedVoucher.Vouchers.Discount}% OFF</Text>
-                    <Text style={styles.voucherCodeTop}>{String(selectedVoucher.EventID ?? "")}</Text>
-                  </ImageBackground>
-                </View>
-              </>
-            )}
+                  <View style={styles.voucherWrapper}>
+                    <ImageBackground source={voucherTemplate} style={styles.voucherImage} resizeMode="contain">
+                      <View style={styles.qrCodeBox}>
+                        <QRCode value={qrData} size={58} />
+                      </View>
+                      <Text style={styles.percentageText}>{voucher.Discount}% OFF</Text>
+                      <Text style={styles.voucherCodeTop}>{String(selectedVoucher.EventID ?? "")}</Text>
+                    </ImageBackground>
+                  </View>
+                </>
+              );
+            })()}
             <TouchableOpacity style={styles.closeButton} onPress={closeQrModal}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>

@@ -1,12 +1,29 @@
 export type RootStackParamList = {
+    list: undefined;
     addVoucher: undefined;
     generateVoucher: { generatedData: any };
-  // add other screens and their params as needed
+    editVoucher: { id: number };
 };
+export type Customer = {
+    id: number;
+    FirstName: string;
+    LastName: string;
+    Email: string;
+    ContactNumber: string;
+};
+
+export type Voucher = {
+    id: number;
+    Discount: number;
+    Status: string;
+};
+
 export type ReleasedVoucher = {
-    id: string;
-    voucherCode: string;
-    discount: number;
-    email: string;
-    claimed: boolean;
+    id: number;
+    VoucherID: number;
+    CustomerID: number;
+    EventID?: string;
+    Customers: Customer[];  
+    Vouchers: Voucher[];  
 };
+
