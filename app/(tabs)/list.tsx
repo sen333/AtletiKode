@@ -30,12 +30,14 @@ const List = () => {
   })
 
   const navigation = useNavigation()
-  const [vouchers, setVouchers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [selectedVoucher, setSelectedVoucher] = useState(null)
-  const [qrModalVisible, setQrModalVisible] = useState(false)
-  const [qrData, setQrData] = useState("")
-  const [refreshing, setRefreshing] = useState(false)
+ const [vouchers, setVouchers] = useState([])
+const [unclaimedCount, setUnclaimedCount] = useState(0)
+const [claimedCount, setClaimedCount] = useState(0)
+const [loading, setLoading] = useState(true)
+const [selectedVoucher, setSelectedVoucher] = useState(null)
+const [qrModalVisible, setQrModalVisible] = useState(false)
+const [qrData, setQrData] = useState("")
+const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -48,32 +50,42 @@ const List = () => {
   }, [])
 
   const fetchVouchers = async () => {
-    try {
-      setLoading(true)
+  try {
+    setLoading(true)
 
-      // Fetch vouchers with customer information
-      const { data, error } = await supabase
-        .from("ReleasedVoucher")
-        .select(`
-          id,
-          VoucherID,
-          CustomerID,
-          EventID,
-          Vouchers:VoucherID (id, Discount, Status),
-          Customers:CustomerID (id, FirstName, LastName, Email, ContactNumber)
-        `)
-        .order("id", { ascending: false })
+    const { data, error } = await supabase
+      .from("ReleasedVoucher")
+      .select(`
+        id,
+        VoucherID,
+        CustomerID,
+        EventID,
+        Vouchers:VoucherID (id, Discount, Status),
+        Customers:CustomerID (id, FirstName, LastName, Email, ContactNumber)
+      `)
+      .order("id", { ascending: false })
 
-      if (error) throw error
+    if (error) throw error
 
-      setVouchers(data || [])
-    } catch (error) {
-      console.error("Error fetching vouchers:", error)
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
+    setVouchers(data || [])
+
+    // Calculate unclaimed and claimed counts
+    const unclaimed = data?.filter(
+      (voucher) => voucher.Vouchers.Status === "Unclaimed"
+    ).length || 0
+    const claimed = data?.filter(
+      (voucher) => voucher.Vouchers.Status === "Claimed"
+    ).length || 0
+
+    setUnclaimedCount(unclaimed)
+    setClaimedCount(claimed)
+  } catch (error) {
+    console.error("Error fetching vouchers:", error)
+  } finally {
+    setLoading(false)
+    setRefreshing(false)
   }
+}
 
   const handleRefresh = () => {
     setRefreshing(true)
@@ -207,6 +219,19 @@ const List = () => {
 
       <View style={styles.horizontalLine} />
 
+      <View style={styles.statsContainer}>
+  <View style={styles.statBox}>
+    <Text style={styles.statNumber}>{unclaimedCount}</Text>
+    <Text style={styles.statLabel}>Unclaimed Vouchers</Text>
+  </View>
+  <View style={styles.statBox}>
+    <Text style={styles.statNumber}>{claimedCount}</Text>
+    <Text style={styles.statLabel}>Claimed Vouchers</Text>
+  </View>
+</View>
+
+<View style={styles.horizontalLine} />
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#63120E" />
@@ -269,7 +294,7 @@ const List = () => {
 
             <View style={styles.qrContainer}>
               {qrData ? (
-                <QRCode value={qrData} size={400} />
+                <QRCode value={qrData} size={250} />
               ) : (
                 <Text style={styles.noQrText}>QR code not available</Text>
               )}
@@ -349,13 +374,13 @@ const styles = StyleSheet.create({
     marginVertical: 0,
   },
   listContent: {
-    padding: 16,
+    padding: 12,
   },
   voucherItem: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -369,7 +394,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   voucherName: {
-    fontSize: width * 0.04,
+    fontSize: width * 0.036,
     fontFamily: "Manrope_700Bold",
     color: "#13390B",
   },
@@ -384,17 +409,17 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_700Bold",
   },
   voucherDetails: {
-    marginTop: 4,
-    marginBottom: 12,
+    marginTop: 2,
+    marginBottom: 8,
   },
   voucherEmail: {
-    fontSize: width * 0.035,
+    fontSize: width * 0.032,
     fontFamily: "Manrope_400Regular",
     color: "#555",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   voucherDiscount: {
-    fontSize: width * 0.035,
+    fontSize: width * 0.032,
     fontFamily: "Manrope_700Bold",
     color: "#63120E",
   },
@@ -403,18 +428,18 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     borderTopWidth: 1,
     borderTopColor: "#E0E0E0",
-    paddingTop: 12,
+    paddingTop: 8,
   },
   editButton: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 6,
+    padding: 4,
   },
   editButtonText: {
-    marginLeft: 4,
+    marginLeft: 2,
     color: "#63120E",
     fontFamily: "Manrope_700Bold",
-    fontSize: width * 0.03,
+    fontSize: width * 0.025,
   },
   addButton: {
     position: "absolute",
@@ -547,6 +572,34 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_700Bold",
     textAlign: "center",
   },
+  statsContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  padding: 0,
+  marginBottom: 0,
+  width: '90%',
+  marginLeft: '5%',
+},
+statBox: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: '#fff',
+  padding: 10,
+  width: '45%',
+},
+statNumber: {
+  fontSize: width * 0.08,
+  fontWeight: 'bold',
+  color: '#13390B',
+  fontFamily: 'Manrope_700Bold',
+  marginBottom: 5,
+},
+statLabel: {
+  fontSize: width * 0.03,
+  color: '#555',
+  textAlign: 'center',
+  fontFamily: 'Manrope_400Regular',
+},
 })
 
 export default List
