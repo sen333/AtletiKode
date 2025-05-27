@@ -1,5 +1,7 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+"use client"
+
+import React, { useEffect, useLayoutEffect, useState } from "react"
+import { supabase } from "../lib/supabase"
 import {
   View,
   Text,
@@ -11,25 +13,22 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import {
-  useFonts,
-  Manrope_400Regular,
-  Manrope_700Bold,
-} from "@expo-google-fonts/manrope";
-import * as SplashScreen from "expo-splash-screen";
+} from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
+import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native"
+import { useFonts, Manrope_400Regular, Manrope_700Bold } from "@expo-google-fonts/manrope"
+import * as SplashScreen from "expo-splash-screen"
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync()
 
 const AddVoucher = () => {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
-  });
+  })
 
-  const navigation = useNavigation();
+  const navigation = useNavigation()
+  const route = useRoute()
 
   const initialFormData = {
     firstName: "",
@@ -38,160 +37,171 @@ const AddVoucher = () => {
     phoneNumber: "",
     discount: "",
     voucherCode: "",
-  };
+  }
 
   type FormErrors = {
-    [key in keyof typeof initialFormData]?: string;
-  };
+    [key in keyof typeof initialFormData]?: string
+  }
 
-  const [formData, setFormData] = useState(initialFormData);
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [formData, setFormData] = useState(initialFormData)
+  const [formErrors, setFormErrors] = useState<FormErrors>({})
+  const [isEditing, setIsEditing] = useState(false)
 
   useFocusEffect(
     React.useCallback(() => {
-      setFormData(initialFormData);
-      setFormErrors({});
-    }, [])
-  );
+      // Check if we're editing an existing voucher
+      if (route.params?.editData) {
+        setFormData(route.params.editData)
+        setIsEditing(true)
+      } else {
+        setFormData(initialFormData)
+        setIsEditing(false)
+      }
+      setFormErrors({})
+    }, [route.params]),
+  )
 
   const formFields = [
     { key: "firstName", label: "Recipient's First Name", placeholder: "Enter first name" },
     { key: "lastName", label: "Recipient's Last Name", placeholder: "Enter last name" },
-    { key: "email", label: "Recipient's Email Address", placeholder: "Enter email address", keyboardType: "email-address" },
-    { key: "phoneNumber", label: "Recipient's Phone Number", placeholder: "Enter phone number", keyboardType: "phone-pad" },
+    {
+      key: "email",
+      label: "Recipient's Email Address",
+      placeholder: "Enter email address",
+      keyboardType: "email-address",
+    },
+    {
+      key: "phoneNumber",
+      label: "Recipient's Phone Number",
+      placeholder: "Enter phone number",
+      keyboardType: "phone-pad",
+    },
     { key: "discount", label: "Recipient's Discount Benefit(%)", placeholder: "Enter discount (e.g. 20)" },
-    { key: "voucherCode", label: "Atletika Event Voucher Code (ATK-XXX)", placeholder: "Enter the event's voucher code" },
-  ];
+    {
+      key: "voucherCode",
+      label: "Atletika Event Voucher Code (ATK-XXX)",
+      placeholder: "Enter the event's voucher code",
+    },
+  ]
 
   useLayoutEffect(() => {
-    navigation.setOptions({ headerShown: false });
-  }, [navigation]);
+    navigation.setOptions({ headerShown: false })
+  }, [navigation])
 
   useEffect(() => {
     if (fontsLoaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync()
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }));
+    }))
 
     setFormErrors((prev) => ({
       ...prev,
       [field]: undefined,
-    }));
-  };
+    }))
+  }
 
   const handleGenerateVoucher = async () => {
-    const errors: FormErrors = {};
+    const errors: FormErrors = {}
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const voucherCodeRegex = /^ATK-\d{3}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const voucherCodeRegex = /^ATK-\d{3}$/
 
     // First name
     if (!formData.firstName.trim()) {
-      errors.firstName = "First name is required.";
+      errors.firstName = "First name is required."
     } else if (/\d/.test(formData.firstName)) {
-      errors.firstName = "First name should not contain numbers.";
+      errors.firstName = "First name should not contain numbers."
     }
 
     // Last Name
     if (!formData.lastName.trim()) {
-      errors.lastName = "Last name is required.";
+      errors.lastName = "Last name is required."
     } else if (/\d/.test(formData.lastName)) {
-      errors.lastName = "Last name should not contain numbers.";
+      errors.lastName = "Last name should not contain numbers."
     }
 
-    // Emaeil
+    // Email
     if (!formData.email.trim()) {
-      errors.email = "Email is required.";
+      errors.email = "Email is required."
     } else if (!emailRegex.test(formData.email)) {
-      errors.email = "Please enter a valid email address.";
+      errors.email = "Please enter a valid email address."
     }
 
-    // hoe Number
+    // Phone Number
     if (!formData.phoneNumber.trim()) {
-      errors.phoneNumber = "Phone number is required.";
+      errors.phoneNumber = "Phone number is required."
     } else if (!/^\d+$/.test(formData.phoneNumber)) {
-      errors.phoneNumber = "Phone number must contain only digits.";
+      errors.phoneNumber = "Phone number must contain only digits."
     } else if (formData.phoneNumber.length < 10 || formData.phoneNumber.length > 13) {
-      errors.phoneNumber = "Phone number must be 10–13 digits.";
+      errors.phoneNumber = "Phone number must be 10–13 digits."
     }
 
     if (!formData.discount.trim()) {
-      errors.discount = "Discount is required.";
+      errors.discount = "Discount is required."
     } else if (!/^\d+$/.test(formData.discount)) {
-      errors.discount = "Discount must be a number only (no %).";
+      errors.discount = "Discount must be a number only (no %)."
     } else {
-      const discountValue = parseInt(formData.discount, 10);
+      const discountValue = Number.parseInt(formData.discount, 10)
       if (discountValue < 0 || discountValue > 100) {
-        errors.discount = "Discount must be between 0 and 100.";
+        errors.discount = "Discount must be between 0 and 100."
       }
     }
 
-    // Voucher fode
+    // Voucher code
     if (!formData.voucherCode.trim()) {
-      errors.voucherCode = "Voucher code is required.";
+      errors.voucherCode = "Voucher code is required."
     } else if (!voucherCodeRegex.test(formData.voucherCode)) {
-      errors.voucherCode = "Voucher code must be in format ATK-XXX (e.g., ATK-123).";
+      errors.voucherCode = "Voucher code must be in format ATK-XXX (e.g., ATK-123)."
     } else {
-
-      const { data, error } = await supabase
-        .from("Events") 
-        .select("*")
-        .eq("id", formData.voucherCode.trim());
+      const { data, error } = await supabase.from("Events").select("*").eq("id", formData.voucherCode.trim())
 
       if (error) {
-        errors.voucherCode = "Error checking voucher code.";
+        errors.voucherCode = "Error checking voucher code."
       } else if (!data || data.length === 0) {
-        errors.voucherCode = "Voucher code does not exist.";
+        errors.voucherCode = "Voucher code does not exist."
       }
     }
 
-    setFormErrors(errors);
+    setFormErrors(errors)
 
     if (Object.keys(errors).length === 0) {
       navigation.navigate("reviewVoucher", {
         voucherData: formData,
-      });
+      })
     }
-  };
+  }
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded) return null
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
         <View style={styles.headerContent}>
-          <Image
-            source={require("../../assets/images/logo2.png")}
-            style={styles.logo}
-          />
+          <Image source={require("../../assets/images/logo2.png")} style={styles.logo} />
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>AtletiKode</Text>
-            <Text style={styles.headerSubtitle}>
-              UP Mindanao Atletika's Voucher Management System
-            </Text>
+            <Text style={styles.headerSubtitle}>UP Mindanao Atletika's Voucher Management System</Text>
           </View>
         </View>
       </LinearGradient>
 
       <View style={styles.sectionTitleContainer}>
-        <Text style={styles.sectionTitle}>Generate New Voucher</Text>
+        <Text style={styles.sectionTitle}>{isEditing ? "Edit Voucher Details" : "Generate New Voucher"}</Text>
       </View>
 
       <View style={styles.horizontalLine} />
 
       <View style={styles.subtitleTitleContainer}>
         <Text style={styles.subtitle}>
-          Enter the required information for the voucher. Make sure to fill it
-          out correctly.
+          {isEditing
+            ? "Update the voucher information below."
+            : "Enter the required information for the voucher. Make sure to fill it out correctly."}
         </Text>
       </View>
 
@@ -204,35 +214,26 @@ const AddVoucher = () => {
           <View key={field.key} style={styles.fieldContainer}>
             <Text style={styles.label}>{field.label}:</Text>
             <TextInput
-              style={[
-                styles.input,
-                formErrors[field.key] && { borderColor: "#FF3B30" },
-              ]}
+              style={[styles.input, formErrors[field.key] && { borderColor: "#FF3B30" }]}
               placeholder={field.placeholder}
               placeholderTextColor="#999"
               value={formData[field.key]}
               onChangeText={(text) => handleInputChange(field.key, text)}
               keyboardType={field.keyboardType || "default"}
             />
-            {formErrors[field.key] && (
-              <Text style={styles.errorText}>{formErrors[field.key]}</Text>
-            )}
+            {formErrors[field.key] && <Text style={styles.errorText}>{formErrors[field.key]}</Text>}
           </View>
         ))}
 
-        <TouchableOpacity
-          style={styles.generateButton}
-          onPress={handleGenerateVoucher}
-        >
-          <Text style={styles.generateButtonText}>Generate Voucher</Text>
+        <TouchableOpacity style={styles.generateButton} onPress={handleGenerateVoucher}>
+          <Text style={styles.generateButtonText}>{isEditing ? "Update Voucher" : "Generate Voucher"}</Text>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
-  );
-};
+  )
+}
 
-
-const { width, height } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window")
 
 const styles = StyleSheet.create({
   container: {
@@ -360,6 +361,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontFamily: "Manrope_400Regular",
   },
-});
+})
 
-export default AddVoucher;
+export default AddVoucher

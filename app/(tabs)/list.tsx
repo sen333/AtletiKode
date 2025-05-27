@@ -1,181 +1,297 @@
-import React, { useEffect } from "react";
-import { useFocusEffect } from "@react-navigation/native";
+"use client"
+
+import { useState, useEffect } from "react"
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
+  TouchableOpacity,
   Image,
   Dimensions,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import {
-  useFonts,
-  Manrope_400Regular,
-  Manrope_700Bold,
-} from "@expo-google-fonts/manrope";
-import * as SplashScreen from "expo-splash-screen";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import Feather from "@expo/vector-icons/Feather";
-import { useRouter } from "expo-router";
-import { supabase } from "../lib/supabase";
+  FlatList,
+  ActivityIndicator,
+  Modal,
+  SafeAreaView,
+} from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
+import { useNavigation } from "@react-navigation/native"
+import { useFonts, Manrope_400Regular, Manrope_700Bold } from "@expo-google-fonts/manrope"
+import * as SplashScreen from "expo-splash-screen"
+import { supabase } from "../lib/supabase"
+import QRCode from "react-native-qrcode-svg"
+import { Feather } from "@expo/vector-icons"
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync()
 
-const list = () => {
-  const router = useRouter();
-  const [vouchers, setVouchers] = React.useState<any[]>([]);
-  const [unclaimedCount, setUnclaimedCount] = React.useState(0);
-  const [claimedCount, setClaimedCount] = React.useState(0);
+const List = () => {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
-  });
+  })
 
-  const loadData = async () => {
-    const { data: vouchers0, error: error_fetchingVouchers } = await supabase
-      .from("ReleasedVoucher")
-      .select("*, Vouchers(*), Customers(*)");
-
-    if (error_fetchingVouchers) {
-      console.log("Error fetching vouchers:", error_fetchingVouchers);
-      return;
-    }
-
-    console.log("Fetched vouchers:", vouchers0);
-    setVouchers(vouchers0 as any[]);
-
-    // Calculate unclaimed and claimed vouchers
-    const unclaimed = vouchers0.filter(
-      (voucher) => voucher.Vouchers.Status === "Unclaimed"
-    ).length;
-    const claimed = vouchers0.filter(
-      (voucher) => voucher.Vouchers.Status === "Claimed"
-    ).length;
-
-    setUnclaimedCount(unclaimed);
-    setClaimedCount(claimed);
-  };
-
-  useFocusEffect(
-    React.useCallback(() => {
-      if (fontsLoaded) {
-        loadData();
-      }
-    }, [fontsLoaded])
-  );
+  const navigation = useNavigation()
+  const [vouchers, setVouchers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedVoucher, setSelectedVoucher] = useState(null)
+  const [qrModalVisible, setQrModalVisible] = useState(false)
+  const [qrData, setQrData] = useState("")
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (fontsLoaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync()
     }
+  }, [fontsLoaded])
 
-    loadData();
-  }, [fontsLoaded]);
+  useEffect(() => {
+    fetchVouchers()
+  }, [])
 
-  if (!fontsLoaded) {
-    return null;
+  const fetchVouchers = async () => {
+    try {
+      setLoading(true)
+
+      // Fetch vouchers with customer information
+      const { data, error } = await supabase
+        .from("ReleasedVoucher")
+        .select(`
+          id,
+          VoucherID,
+          CustomerID,
+          EventID,
+          Vouchers:VoucherID (id, Discount, Status),
+          Customers:CustomerID (id, FirstName, LastName, Email, ContactNumber)
+        `)
+        .order("id", { ascending: false })
+
+      if (error) throw error
+
+      setVouchers(data || [])
+    } catch (error) {
+      console.error("Error fetching vouchers:", error)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
   }
 
-  const renderItem = ({ item }: { item: any }) => (
-    <View style={styles.tableRow}>
-      <Text style={styles.tableCell}>{item.Vouchers.id}</Text>
-      <Text style={styles.tableCell}>
-        {item.Customers.FirstName + " " + item.Customers.LastName}
-      </Text>
-      <Text style={styles.tableCell}>{item.Customers.Email}</Text>
-      <Text style={[styles.tableCell, styles.status]}>
-        {item.Vouchers.Status}
-      </Text>
-      <Feather
-        name="edit"
-        size={16}
-        color="#13390B"
-        style={styles.tableIcon}
-        onPress={() =>
-          router.push({
-            pathname: "/editVoucher",
-            params: {
-              id: item.id,
-              recipient: item.recipient,
-              email: item.email,
-              status: item.status,
-            },
-          })
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchVouchers()
+  }
+
+  const handleVoucherPress = async (voucher) => {
+    try {
+      setSelectedVoucher(voucher)
+
+      // First try to get the QR data from the qr table
+      try {
+        // Try to get the qr_data field first (if it exists)
+        const { data: qrDataWithField, error: qrDataError } = await supabase
+          .from("qr")
+          .select("qr_data, voucher_code")
+          .eq("voucher_code", voucher.id)
+          .single()
+
+        if (qrDataError) {
+          console.error("Error fetching QR data:", qrDataError)
+
+          // If that fails, try just getting the voucher_code
+          const { data: qrCodeOnly, error: qrCodeError } = await supabase
+            .from("qr")
+            .select("voucher_code")
+            .eq("voucher_code", voucher.id)
+            .single()
+
+          if (qrCodeError) {
+            console.error("Error fetching voucher_code:", qrCodeError)
+            // Fallback to using the voucher ID directly
+            setQrData(voucher.id)
+          } else if (qrCodeOnly) {
+            // Use the voucher_code as the QR data
+            setQrData(qrCodeOnly.voucher_code)
+          } else {
+            // Fallback to using the voucher ID directly
+            setQrData(voucher.id)
+          }
+        } else if (qrDataWithField && qrDataWithField.qr_data) {
+          // Use the stored qr_data value
+          setQrData(qrDataWithField.qr_data)
+        } else if (qrDataWithField) {
+          // Fallback to using the voucher_code
+          setQrData(qrDataWithField.voucher_code)
+        } else {
+          // Fallback to using the voucher ID directly
+          setQrData(voucher.id)
         }
-      />
-    </View>
-  );
+      } catch (qrTableError) {
+        console.warn("QR table not accessible, using voucher ID:", qrTableError)
+        // Fallback to using the voucher ID directly
+        setQrData(voucher.id)
+      }
+
+      setQrModalVisible(true)
+    } catch (error) {
+      console.error("Error handling voucher press:", error)
+    }
+  }
+
+  const handleEditVoucher = (voucher) => {
+    // Navigate to the editVoucher screen with the voucher ID
+    navigation.navigate("editVoucher", { id: voucher.id })
+  }
+
+  const closeQrModal = () => {
+    setQrModalVisible(false)
+    setSelectedVoucher(null)
+    setQrData("")
+  }
+
+  const renderVoucherItem = ({ item }) => {
+    const customer = item.Customers
+    const voucher = item.Vouchers
+
+    if (!customer || !voucher) return null
+
+    return (
+      <TouchableOpacity style={styles.voucherItem} onPress={() => handleVoucherPress(item)}>
+        <View style={styles.voucherHeader}>
+          <Text style={styles.voucherName}>
+            {customer.FirstName} {customer.LastName}
+          </Text>
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor:
+                  voucher.Status === "Claimed" ? "#4CAF50" : voucher.Status === "Unclaimed" ? "#FF9800" : "#F44336",
+              },
+            ]}
+          >
+            <Text style={styles.statusText}>{voucher.Status}</Text>
+          </View>
+        </View>
+
+        <View style={styles.voucherDetails}>
+          <Text style={styles.voucherEmail}>{customer.Email}</Text>
+          <Text style={styles.voucherDiscount}>Discount: {voucher.Discount}%</Text>
+        </View>
+
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.editButton} onPress={() => handleEditVoucher(item)}>
+            <Feather name="edit" size={18} color="#63120E" />
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    )
+  }
+
+  if (!fontsLoaded) return null
 
   return (
-    <View style={styles.container}>
-      {/* Header with Gradient */}
+    <SafeAreaView style={styles.container}>
       <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
         <View style={styles.headerContent}>
-          <Image
-            source={require("../../assets/images/logo2.png")}
-            style={styles.logo}
-          />
+          <Image source={require("../../assets/images/logo2.png")} style={styles.logo} />
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>AtletiKode</Text>
-            <Text style={styles.headerSubtitle}>
-              UP Mindanao Atletika's Voucher Management System
-            </Text>
+            <Text style={styles.headerSubtitle}>UP Mindanao Atletika's Voucher Management System</Text>
           </View>
         </View>
       </LinearGradient>
 
-      {/* Distributed Vouchers Heading */}
       <View style={styles.sectionTitleContainer}>
-        <Text style={styles.sectionTitle}>Distributed Vouchers</Text>
+        <Text style={styles.sectionTitle}>Voucher List</Text>
       </View>
 
       <View style={styles.horizontalLine} />
 
-      {/* Statistics Section */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{unclaimedCount}</Text>
-          <Text style={styles.statLabel}>Unclaimed Vouchers</Text>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#63120E" />
+          <Text style={styles.loadingText}>Loading vouchers...</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{claimedCount}</Text>
-          <Text style={styles.statLabel}>Claimed Vouchers</Text>
-        </View>
-      </View>
-
-      <View style={styles.horizontalLine} />
-
-      {/* Table Header */}
-      <View style={styles.tableHeader}>
-        <Text style={styles.tableHeaderText}>Voucher ID</Text>
-        <Text style={styles.tableHeaderText}>Recipient</Text>
-        <Text style={styles.tableHeaderText}>Email</Text>
-        <Text style={styles.tableHeaderText}>Status</Text>
-        <AntDesign
-          name="setting"
-          size={20}
-          color="#13390B"
-          style={styles.tableHeaderIcon}
+      ) : (
+        <FlatList
+          data={vouchers}
+          renderItem={renderVoucherItem}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No vouchers found</Text>
+            </View>
+          }
         />
-      </View>
+      )}
 
-      <View style={styles.horizontalLine} />
+      {/* Add Voucher Button */}
+      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("addVoucher")}>
+        <Feather name="plus" size={24} color="#FFF" />
+      </TouchableOpacity>
 
-      {/* Table Rows */}
-      <FlatList
-        data={vouchers}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
-    </View>
-  );
-};
+      {/* QR Code Modal */}
+      <Modal visible={qrModalVisible} transparent={true} animationType="fade" onRequestClose={closeQrModal}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Voucher QR Code</Text>
 
-const { width, height } = Dimensions.get("window");
+            {selectedVoucher && (
+              <View style={styles.modalDetails}>
+                <Text style={styles.modalName}>
+                  {selectedVoucher.Customers.FirstName} {selectedVoucher.Customers.LastName}
+                </Text>
+                <Text style={styles.modalEmail}>{selectedVoucher.Customers.Email}</Text>
+                <Text style={styles.modalPhone}>{selectedVoucher.Customers.ContactNumber}</Text>
+                <Text style={styles.modalDiscount}>Discount: {selectedVoucher.Vouchers.Discount}%</Text>
+                <Text style={styles.modalEvent}>Event: {selectedVoucher.EventID}</Text>
+                <View
+                  style={[
+                    styles.modalStatusBadge,
+                    {
+                      backgroundColor:
+                        selectedVoucher.Vouchers.Status === "Claimed"
+                          ? "#4CAF50"
+                          : selectedVoucher.Vouchers.Status === "Unclaimed"
+                            ? "#FF9800"
+                            : "#F44336",
+                    },
+                  ]}
+                >
+                  <Text style={styles.modalStatusText}>{selectedVoucher.Vouchers.Status}</Text>
+                </View>
+              </View>
+            )}
+
+            <View style={styles.qrContainer}>
+              {qrData ? (
+                <QRCode value={qrData} size={400} />
+              ) : (
+                <Text style={styles.noQrText}>QR code not available</Text>
+              )}
+            </View>
+
+            <TouchableOpacity style={styles.closeButton} onPress={closeQrModal}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  )
+}
+
+const { width, height } = Dimensions.get("window")
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F8F8" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F8F8",
+  },
   header: {
     height: height * 0.16,
     marginTop: 6,
@@ -211,7 +327,6 @@ const styles = StyleSheet.create({
   },
   sectionTitleContainer: {
     padding: 14,
-    alignSelf: "flex-start",
     width: "100%",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -222,75 +337,9 @@ const styles = StyleSheet.create({
     fontSize: width * 0.05,
     fontWeight: "bold",
     color: "#13390B",
-    textAlign: "left",
     marginLeft: 4,
     fontFamily: "Manrope_700Bold",
     letterSpacing: -0.6,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  statBox: { alignItems: "center", backgroundColor: "#F8F8F8" },
-  statNumber: {
-    fontSize: width * 0.08,
-    fontWeight: "bold",
-    color: "#13390B",
-    fontFamily: "Manrope_700Bold",
-    letterSpacing: -0.42,
-  },
-  statLabel: {
-    fontSize: width * 0.035,
-    color: "#13390B",
-    fontFamily: "Manrope_400Regular",
-    letterSpacing: -0.42,
-  },
-  tableHeader: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 8,
-    backgroundColor: "#F8F8F8",
-    width: "92%",
-    alignSelf: "center",
-  },
-  tableIcon: {
-    marginLeft: 4,
-  },
-  tableHeaderIcon: {
-    marginLeft: 0,
-  },
-  tableHeaderText: {
-    fontWeight: "bold",
-    fontSize: width * 0.035,
-    flex: 1,
-    textAlign: "center",
-    fontFamily: "Manrope_700Bold",
-    letterSpacing: -0.4,
-    color: "#13390B",
-  },
-  tableRow: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#13390B",
-    width: "92%",
-    alignSelf: "center",
-  },
-  tableCell: {
-    fontSize: width * 0.028,
-    flex: 1,
-    textAlign: "center",
-    fontFamily: "Manrope_400Regular",
-    color: "#13390B",
-  },
-  status: {
-    color: "#13390B",
-    fontWeight: "bold",
-    fontFamily: "Manrope_700Bold",
   },
   horizontalLine: {
     height: 1,
@@ -299,6 +348,205 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginVertical: 0,
   },
-});
+  listContent: {
+    padding: 16,
+  },
+  voucherItem: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  voucherHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  voucherName: {
+    fontSize: width * 0.04,
+    fontFamily: "Manrope_700Bold",
+    color: "#13390B",
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: "#fff",
+    fontSize: width * 0.03,
+    fontFamily: "Manrope_700Bold",
+  },
+  voucherDetails: {
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  voucherEmail: {
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_400Regular",
+    color: "#555",
+    marginBottom: 4,
+  },
+  voucherDiscount: {
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_700Bold",
+    color: "#63120E",
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
+    paddingTop: 12,
+  },
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 6,
+  },
+  editButtonText: {
+    marginLeft: 4,
+    color: "#63120E",
+    fontFamily: "Manrope_700Bold",
+    fontSize: width * 0.03,
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#63120E",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_400Regular",
+    color: "#555",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: 50,
+  },
+  emptyText: {
+    fontSize: width * 0.04,
+    fontFamily: "Manrope_400Regular",
+    color: "#555",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: width * 0.9,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    maxHeight: height * 0.85,
+  },
+  modalTitle: {
+    fontSize: width * 0.05,
+    fontFamily: "Manrope_700Bold",
+    color: "#13390B",
+    marginBottom: 16,
+  },
+  modalDetails: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalName: {
+    fontSize: width * 0.04,
+    fontFamily: "Manrope_700Bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  modalDiscount: {
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_400Regular",
+    color: "#63120E",
+  },
+  qrContainer: {
+    padding: 20,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+    width: width * 0.8,
+    height: width * 0.8,
+  },
+  noQrText: {
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_400Regular",
+    color: "#555",
+  },
+  closeButton: {
+    backgroundColor: "#63120E",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: "100%",
+  },
+  closeButtonText: {
+    color: "#fff",
+    textAlign: "center",
+    fontFamily: "Manrope_700Bold",
+    fontSize: width * 0.035,
+  },
+  modalEmail: {
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_400Regular",
+    color: "#666",
+    marginBottom: 4,
+  },
+  modalPhone: {
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_400Regular",
+    color: "#666",
+    marginBottom: 8,
+  },
+  modalEvent: {
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_400Regular",
+    color: "#666",
+    marginBottom: 8,
+  },
+  modalStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 8,
+  },
+  modalStatusText: {
+    color: "#fff",
+    fontSize: width * 0.03,
+    fontFamily: "Manrope_700Bold",
+    textAlign: "center",
+  },
+})
 
-export default list;
+export default List
