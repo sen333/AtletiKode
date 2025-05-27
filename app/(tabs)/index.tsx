@@ -1,30 +1,36 @@
+import {
+  useFocusEffect,
+  useNavigation,
+} from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../../constants/types";
+
 import React, { useState } from "react";
 import {
+  Image,
+  ScrollView,
   StatusBar,
-  View,
+  StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
-  StyleSheet,
-  ScrollView,
-  Switch,
+  View,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { supabase } from "../lib/supabase";
-import { useFocusEffect } from "@react-navigation/native";
 import Modal from "react-native-modal";
+import { supabase } from "../lib/supabase";
+
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, "list">;
 
 const LoginScreen = () => {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false); // Visual-only state
-  const [isModalVisible, setModalVisible] = useState(false); // Custom modal state
-  const [modalMessage, setModalMessage] = useState(""); // Message for the modal
-  const navigation = useNavigation();
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
-  // Reset the text fields when the page gains focus
   useFocusEffect(
     React.useCallback(() => {
       setUsername("");
@@ -35,14 +41,17 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     setLoading(true);
     console.log("Logging in with:", { username, password });
+
     const { error } = await supabase.auth.signInWithPassword({
       email: username,
       password: password,
     });
+
     setLoading(false);
+
     if (error) {
-      setModalMessage(error.message); // Set the error message
-      setModalVisible(true); // Show the modal
+      setModalMessage(error.message);
+      setModalVisible(true);
     } else {
       navigation.navigate("list");
     }
@@ -63,9 +72,11 @@ const LoginScreen = () => {
               UP Mindanao Atletika's Voucher Management System
             </Text>
           </View>
+
           <View style={styles.loginContainer}>
             <Text style={styles.loginTitle}>UP MINDANAO ATLETIKA</Text>
             <Text style={styles.loginSubtitle}>Administrator Log In</Text>
+
             <Text style={styles.label}>Username:</Text>
             <TextInput
               style={styles.input}
@@ -74,6 +85,7 @@ const LoginScreen = () => {
               value={username}
               onChangeText={setUsername}
             />
+
             <Text style={styles.label}>Password:</Text>
             <TextInput
               style={styles.input}
@@ -84,7 +96,6 @@ const LoginScreen = () => {
               onChangeText={setPassword}
             />
 
-            {/* Visual-only Remember Me checkbox */}
             <View style={styles.rememberMeContainer}>
               <Switch
                 value={rememberMe}
@@ -102,7 +113,6 @@ const LoginScreen = () => {
         </ScrollView>
       </View>
 
-      {/* Custom Modal */}
       <Modal isVisible={isModalVisible} backdropOpacity={0.5}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Login Error</Text>

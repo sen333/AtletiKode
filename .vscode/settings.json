@@ -20,5 +20,18 @@
   ],
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
-  }
+  },
+"cSpell.words": [
+  "supabase",
+  "SUPABASE",
+  "qrcode",
+  "AtletiKode",
+  "Atletika",
+  "delit",
+  "generateVoucher",
+  "Manrope",
+  "QRCode",
+  "LottieView",
+  "addVoucher",
+]
 }

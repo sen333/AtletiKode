@@ -1,4 +1,11 @@
-import { useNavigation, useRoute } from "@react-navigation/native";
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../../constants/types"; // adjust if path differs
+
 import { Buffer } from "buffer";
 import LottieView from "lottie-react-native";
 import React, { useEffect, useRef, useState } from "react";
@@ -20,9 +27,12 @@ const voucherTemplate = require("../../assets/images/New.png");
 const dotsLoader = require("../../assets/animations/dots-loader.json");
 const checkSuccess = require("../../assets/animations/check-success.json");
 
+type NavigationProp = StackNavigationProp<RootStackParamList, "generateVoucher">;
+type RouteParams = RouteProp<RootStackParamList, "generateVoucher">;
+
 const GenerateVoucher = () => {
-  const route = useRoute();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
+  const route = useRoute<RouteParams>();
   const { generatedData } = route.params;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -55,14 +65,14 @@ const GenerateVoucher = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const showModal = (title, message, success = true) => {
+  const showModal = (title: string, message: string, success: boolean = true) => {
     setModalTitle(title);
     setModalMessage(message);
     setIsSuccess(success);
     setModalVisible(true);
   };
 
-  const uploadQRImage = async (base64Image, fileName) => {
+  const uploadQRImage = async (base64Image: string, fileName: string) => {
     const { error } = await supabase.storage
       .from("qr-codes")
       .upload(`user_qrs/${fileName}.png`, Buffer.from(base64Image, "base64"), {
@@ -101,7 +111,7 @@ const GenerateVoucher = () => {
         qrImageUrl: imageUrl,
       };
 
-      const SUPABASE_SERVICE_ROLE_KEY = "YOUR_SUPABASE_SERVICE_ROLE_KEY";
+      const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcXdsamdrYmVxeW90Z2VndXNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDcyNDM1NywiZXhwIjoyMDYwMzAwMzU3fQ.r2VZPB8kFXkwmQ4L6EehmyJcugQ7oJmAaRpJGAO2uDQ"; // 🔐 Use secure env in production
 
       const response = await fetch(
         "https://kaqwljgkbeqyotgegusj.supabase.co/functions/v1/send-email",
@@ -122,7 +132,7 @@ const GenerateVoucher = () => {
       if (result.success)
         showModal("Success", "QR code sent via email.", true);
       else showModal("Error", `Failed to send email: ${result.error}`, false);
-    } catch (error) {
+    } catch (error: any) {
       showModal("Error", error.message, false);
     }
   };
