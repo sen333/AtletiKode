@@ -1,180 +1,289 @@
-import React, { useEffect, useLayoutEffect } from "react";
-import { supabase } from "../lib/supabase";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
-import {
-  useFonts,
-  Manrope_400Regular,
-  Manrope_700Bold,
-} from "@expo-google-fonts/manrope";
-import * as SplashScreen from "expo-splash-screen";
-import { useRoute } from "@react-navigation/native";
+"use client"
+
+import { useState, useEffect } from "react"
+import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, ScrollView, Alert } from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
+import { useNavigation, useRoute } from "@react-navigation/native"
+import { useFonts, Manrope_400Regular, Manrope_700Bold } from "@expo-google-fonts/manrope"
+import * as SplashScreen from "expo-splash-screen"
+import { supabase } from "../lib/supabase"
+
+SplashScreen.preventAutoHideAsync()
 
 const ReviewVoucher = () => {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_700Bold,
-  });
+  })
 
-  const navigation = useNavigation();
-  const route = useRoute();
-  const { voucherData } = route.params as { voucherData: any };
-
-  useLayoutEffect(() => {
-    navigation.setOptions({ headerShown: false });
-  }, [navigation]);
+  const navigation = useNavigation()
+  const route = useRoute()
+  const { voucherData } = route.params
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (fontsLoaded) {
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync()
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded])
 
-  if (!fontsLoaded) return null;
-
-  const submitData = async () => {
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
     try {
-      const { data: custID, error: error_insertingCustomer } = await supabase
-        .from("Customers")
-        .insert([
-          {
-            FirstName: voucherData.firstName,
-            LastName: voucherData.lastName,
-            Email: voucherData.email,
-            ContactNumber: voucherData.phoneNumber,
-          },
-        ])
-        .select("*");
+      console.log("Starting voucher creation process...")
 
-      if (error_insertingCustomer) {
-        console.log("Error inserting customer: " + error_insertingCustomer.message);
-        return;
+      // Step 1: Check if customer exists, if not create a new one
+      const { data: existingCustomers, error: customerCheckError } = await supabase
+        .from("Customers")
+        .select("id")
+        .eq("Email", voucherData.email)
+        .limit(1)
+
+      if (customerCheckError) {
+        console.error("Customer check error:", customerCheckError)
+        throw customerCheckError
       }
 
-      const customerID = custID && custID[0] ? custID[0].id : null;
+      let customerId
 
-      const { data: temp_vouchID, error: error_insertingVoucher } = await supabase
+      if (existingCustomers && existingCustomers.length > 0) {
+        customerId = existingCustomers[0].id
+        console.log("Found existing customer:", customerId)
+      } else {
+        // Create new customer
+        const { data: newCustomer, error: createCustomerError } = await supabase
+          .from("Customers")
+          .insert([
+            {
+              FirstName: voucherData.firstName,
+              LastName: voucherData.lastName,
+              Email: voucherData.email,
+              ContactNumber: voucherData.phoneNumber,
+            },
+          ])
+          .select()
+
+        if (createCustomerError) {
+          console.error("Customer creation error:", createCustomerError)
+          throw createCustomerError
+        }
+        customerId = newCustomer[0].id
+        console.log("Created new customer:", customerId)
+      }
+
+      // Step 2: Create a new voucher
+      console.log("Creating voucher...")
+      const { data: newVoucher, error: voucherError } = await supabase
         .from("Vouchers")
         .insert([
           {
-            Discount: voucherData.discount,
+            Discount: Number.parseFloat(voucherData.discount),
             Status: "Unclaimed",
           },
         ])
-        .select("*");
+        .select()
 
-      if (error_insertingVoucher) {
-        console.log("Error inserting voucher: " + error_insertingVoucher.message);
-        return;
+      if (voucherError) {
+        console.error("Voucher creation error:", voucherError)
+        throw voucherError
       }
 
-      const voucherID = temp_vouchID && temp_vouchID[0] ? temp_vouchID[0].id : null;
+      const voucherId = newVoucher[0].id
+      console.log("Created voucher with ID:", voucherId)
 
-      const { data: temp_releasedID, error: error_insertingReleased } = await supabase
+      // Step 3: Get the event ID from the voucher code
+      console.log("Looking up event:", voucherData.voucherCode)
+      const { data: eventData, error: eventError } = await supabase
+        .from("Events")
+        .select("id")
+        .eq("id", voucherData.voucherCode)
+        .limit(1)
+
+      if (eventError) {
+        console.error("Event lookup error:", eventError)
+        throw eventError
+      }
+
+      const eventId = eventData && eventData.length > 0 ? eventData[0].id : voucherData.voucherCode
+      console.log("Using event ID:", eventId)
+
+      // Step 4: Create a released voucher
+      console.log("Creating released voucher...")
+      const { data: releasedVoucher, error: releasedVoucherError } = await supabase
         .from("ReleasedVoucher")
         .insert([
           {
-            CustomerID: customerID,
-            VoucherID: voucherID,
-            EventID: voucherData.voucherCode,
+            VoucherID: voucherId,
+            CustomerID: customerId,
+            EventID: eventId,
           },
         ])
-        .select("*");
+        .select()
 
-      if (error_insertingReleased) {
-        console.log("Error inserting released voucher: " + error_insertingReleased.message);
-        return;
+      if (releasedVoucherError) {
+        console.error("Released voucher creation error:", releasedVoucherError)
+        throw releasedVoucherError
       }
 
-      const releasedID = temp_releasedID && temp_releasedID[0] ? temp_releasedID[0].id : null;
+      const releasedVoucherId = releasedVoucher[0].id
+      console.log("Created released voucher:", releasedVoucherId)
 
-      const generatedData = {
-        ...voucherData,
-        customerID,
-        voucherID,
-        releasedID,
-      };
+      // Step 5: Generate and store QR code (like it was working before)
+      const qrValue = JSON.stringify({
+        customerID: customerId,
+        voucherID: voucherId,
+        releasedID: releasedVoucherId,
+        firstName: voucherData.firstName,
+        lastName: voucherData.lastName,
+        email: voucherData.email,
+        phoneNumber: voucherData.phoneNumber,
+        discount: voucherData.discount,
+        voucherCode: voucherData.voucherCode,
+      })
 
+      // Step 6: Store the QR code in the qr table (restore original working logic)
+      console.log("Creating QR code entry for released voucher:", releasedVoucherId)
+      const { data: qrData, error: qrError } = await supabase
+        .from("qr")
+        .insert([
+          {
+            voucher_code: releasedVoucherId,
+            qr_data: qrValue,
+          },
+        ])
+        .select()
+
+      if (qrError) {
+        console.error("QR insert error with qr_data:", qrError)
+        console.log("Trying without qr_data column...")
+
+        const { error: fallbackQrError } = await supabase.from("qr").insert([
+          {
+            voucher_code: releasedVoucherId,
+          },
+        ])
+
+        if (fallbackQrError) {
+          console.error("Fallback QR insert error:", fallbackQrError)
+          console.warn("QR code creation failed, but voucher was created successfully")
+        } else {
+          console.log("QR code created successfully without qr_data")
+        }
+      } else {
+        console.log("QR code created successfully with qr_data:", qrData)
+      }
+
+      console.log("Voucher and QR creation completed. Navigating to generate screen...")
+
+      // Navigate to generateVoucher screen with the generated data
       navigation.navigate("generateVoucher", {
-        generatedData,
-      });
-    } catch (err) {
-      console.error("Unexpected error: ", err);
+        generatedData: {
+          customerID: customerId,
+          voucherID: voucherId,
+          releasedID: releasedVoucherId,
+          firstName: voucherData.firstName,
+          lastName: voucherData.lastName,
+          email: voucherData.email,
+          phoneNumber: voucherData.phoneNumber,
+          discount: voucherData.discount,
+          voucherCode: voucherData.voucherCode,
+          qrValue: qrValue, // Pass the QR value that was stored
+        },
+      })
+    } catch (error) {
+      console.error("Error submitting voucher:", error)
+      setIsSubmitting(false)
+      Alert.alert("Error", `Failed to create voucher: ${error.message}`)
     }
-  };
+  }
+
+  const handleEditDetails = () => {
+    // Navigate back to the addVoucher screen with the current data
+    navigation.navigate("addVoucher", { editData: voucherData })
+  }
+
+  if (!fontsLoaded) return null
 
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#63120E", "#4A0707"]} style={styles.header}>
         <View style={styles.headerContent}>
-          <Image
-            source={require("../../assets/images/logo2.png")}
-            style={styles.logo}
-          />
+          <Image source={require("../../assets/images/logo2.png")} style={styles.logo} />
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>AtletiKode</Text>
-            <Text style={styles.headerSubtitle}>
-              UP Mindanao Atletika's Voucher Management System
-            </Text>
+            <Text style={styles.headerSubtitle}>UP Mindanao Atletika's Voucher Management System</Text>
           </View>
         </View>
       </LinearGradient>
+
       <View style={styles.sectionTitleContainer}>
-        <Text style={styles.sectionTitle}>Generate New Voucher</Text>
+        <Text style={styles.sectionTitle}>Review Voucher Details</Text>
       </View>
 
       <View style={styles.horizontalLine} />
 
-      <View style={styles.subtitleTitleContainer}>
-        <Text style={styles.subtitle}>Review the following information.</Text>
-      </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* NO QR PREVIEW - Just show the details */}
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailsTitle}>Recipient Information</Text>
 
-      <View style={styles.reviewContainer}>
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>Recipient’s First Name: </Text>
-          <Text style={styles.infoSubtext}>{voucherData.firstName} </Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Name:</Text>
+            <Text style={styles.detailValue}>
+              {voucherData.firstName} {voucherData.lastName}
+            </Text>
+          </View>
 
-          <Text style={styles.infoText}>Recipient’s Last Name: </Text>
-          <Text style={styles.infoSubtext}>{voucherData.lastName} </Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Email:</Text>
+            <Text style={styles.detailValue}>{voucherData.email}</Text>
+          </View>
 
-          <Text style={styles.infoText}>Recipient’s Email: </Text>
-          <Text style={styles.infoSubtext}>{voucherData.email} </Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Phone:</Text>
+            <Text style={styles.detailValue}>{voucherData.phoneNumber}</Text>
+          </View>
 
-          <Text style={styles.infoText}>Recipient’s Phone: </Text>
-          <Text style={styles.infoSubtext}>{voucherData.phoneNumber} </Text>
+          <Text style={[styles.detailsTitle, styles.voucherTitle]}>Voucher Details</Text>
 
-          <Text style={styles.infoText}>Recipient’s Discount: </Text>
-          <Text style={styles.infoSubtext}>{voucherData.discount}</Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Discount:</Text>
+            <Text style={styles.detailValue}>{voucherData.discount}%</Text>
+          </View>
 
-          <Text style={styles.infoText}>Recipient’s Voucher Code:</Text>
-          <Text style={styles.infoSubtext}> {voucherData.voucherCode}</Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Event Code:</Text>
+            <Text style={styles.detailValue}>{voucherData.voucherCode}</Text>
+          </View>
         </View>
 
-        <Text style={styles.reviewReminder}>
-          The presented information will be saved when you generate this
-          voucher.
-        </Text>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[styles.editButton, isSubmitting && styles.disabledButton]}
+            onPress={handleEditDetails}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.editButtonText}>Edit Details</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.generateButton}
-          onPress={submitData}
-        >
-          <Text style={styles.generateButtonText}>Generate Voucher</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={[styles.confirmButton, isSubmitting && styles.disabledButton]}
+            onPress={handleSubmit}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.confirmButtonText}>{isSubmitting ? "Creating..." : "Confirm & Create"}</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
-  );
-};
+  )
+}
 
-const { width, height } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window")
 
 const styles = StyleSheet.create({
   container: {
@@ -214,69 +323,6 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_400Regular",
     letterSpacing: -0.42,
   },
-  reviewContainer: {
-    marginTop: 8,
-    padding: 20,
-    paddingBottom: 150,
-  },
-  horizontalLine: {
-    height: 1,
-    backgroundColor: "#13390B",
-    width: "92%",
-    alignSelf: "center",
-    marginVertical: 0,
-  },
-  subtitleTitleContainer: {
-    marginBottom: 4,
-    marginLeft: 9.8,
-    backgroundColor: "#F8F8F8",
-  },
-  subtitle: {
-    fontSize: width * 0.029,
-    color: "#13390B",
-    fontFamily: "Manrope_400Regular",
-    marginLeft: 9.8,
-  },
-  infoContainer: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 20,
-    marginBottom: 20,
-    borderColor: "#13390B",
-    borderWidth: 1,
-  },
-  infoText: {
-    fontSize: width * 0.032,
-    color: "#13390B",
-    fontFamily: "Manrope_700Bold",
-    marginBottom: 5,
-  },
-  infoSubtext: {
-    fontSize: width * 0.032,
-    color: "#555",
-    fontFamily: "Manrope_400Regular",
-    marginBottom: 8,
-    paddingLeft: 20,
-  },
-  reviewReminder: {
-    fontSize: width * 0.025,
-    color: "#555",
-    fontFamily: "Manrope_400Regular",
-    marginTop: 10,
-    textAlign: "center",
-  },
-  generateButton: {
-    backgroundColor: "#63120E",
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 24,
-  },
-  generateButtonText: {
-    color: "#fff",
-    textAlign: "center",
-    fontFamily: "Manrope_700Bold",
-    fontSize: width * 0.035,
-  },
   sectionTitleContainer: {
     padding: 14,
     width: "100%",
@@ -293,6 +339,95 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope_700Bold",
     letterSpacing: -0.6,
   },
-});
+  horizontalLine: {
+    height: 1,
+    backgroundColor: "#13390B",
+    width: "92%",
+    alignSelf: "center",
+    marginVertical: 0,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    alignItems: "center",
+  },
+  detailsContainer: {
+    width: "100%",
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  detailsTitle: {
+    fontSize: width * 0.04,
+    fontFamily: "Manrope_700Bold",
+    color: "#13390B",
+    marginBottom: 15,
+  },
+  voucherTitle: {
+    marginTop: 20,
+  },
+  detailRow: {
+    flexDirection: "row",
+    marginBottom: 10,
+  },
+  detailLabel: {
+    width: "30%",
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_700Bold",
+    color: "#555",
+  },
+  detailValue: {
+    width: "70%",
+    fontSize: width * 0.035,
+    fontFamily: "Manrope_400Regular",
+    color: "#333",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 30,
+  },
+  editButton: {
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#63120E",
+    width: "48%",
+  },
+  editButtonText: {
+    color: "#63120E",
+    textAlign: "center",
+    fontFamily: "Manrope_700Bold",
+    fontSize: width * 0.035,
+  },
+  confirmButton: {
+    backgroundColor: "#63120E",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    width: "48%",
+  },
+  confirmButtonText: {
+    color: "#fff",
+    textAlign: "center",
+    fontFamily: "Manrope_700Bold",
+    fontSize: width * 0.035,
+  },
+  disabledButton: {
+    opacity: 0.7,
+  },
+})
 
-export default ReviewVoucher;
+export default ReviewVoucher
