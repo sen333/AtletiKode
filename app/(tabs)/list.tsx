@@ -112,7 +112,8 @@ const List = () => {
           <Text style={styles.voucherName}>{customer.FirstName} {customer.LastName}</Text>
           <View style={[styles.statusBadge, {
             backgroundColor: voucher.Status === "Claimed" ? "#4CAF50" : voucher.Status === "Unclaimed" ? "#FF9800" : "#F44336",
-          }]}> <Text style={styles.statusText}>{voucher.Status}</Text>
+          }]}>
+            <Text style={styles.statusText}>{voucher.Status}</Text>
           </View>
         </View>
         <View style={styles.voucherDetails}>
@@ -143,7 +144,9 @@ const List = () => {
         </View>
       </LinearGradient>
 
-      <View style={styles.sectionTitleContainer}><Text style={styles.sectionTitle}>Voucher List</Text></View>
+      <View style={styles.sectionTitleContainer}>
+        <Text style={styles.sectionTitle}>Voucher List</Text>
+      </View>
       <View style={styles.horizontalLine} />
 
       {loading ? (
@@ -162,28 +165,31 @@ const List = () => {
         />
       )}
 
-      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("addVoucher")}> 
+      <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate("addVoucher")}>
         <Feather name="plus" size={24} color="#FFF" />
       </TouchableOpacity>
 
-      <Modal visible={qrModalVisible} transparent={true} animationType="fade" onRequestClose={closeQrModal}>
+      <Modal visible={qrModalVisible} transparent animationType="fade" onRequestClose={closeQrModal}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Voucher QR Code</Text>
             {selectedVoucher && (() => {
               const customer = Array.isArray(selectedVoucher.Customers) ? selectedVoucher.Customers[0] : selectedVoucher.Customers;
               const voucher = Array.isArray(selectedVoucher.Vouchers) ? selectedVoucher.Vouchers[0] : selectedVoucher.Vouchers;
+              if (!customer || !voucher) return null;
               return (
-                <>
+                <View>
                   <View style={styles.modalDetails}>
-                    <Text style={styles.modalName}>{customer.FirstName} {customer.LastName}</Text>
+                    <Text style={styles.modalName}>{`${customer.FirstName} ${customer.LastName}`}</Text>
                     <Text style={styles.modalEmail}>{customer.Email}</Text>
                     <Text style={styles.modalPhone}>{customer.ContactNumber}</Text>
-                    <Text style={styles.modalDiscount}>Discount: {voucher.Discount}% OFF</Text>
-                    <Text style={styles.modalEvent}>Event: {selectedVoucher.EventID ?? "N/A"}</Text>
+                    <Text style={styles.modalDiscount}>{`Discount: ${voucher.Discount}% OFF`}</Text>
+                    <Text style={styles.modalEvent}>{`Event: ${selectedVoucher.EventID ?? "N/A"}`}</Text>
                     <View style={[styles.modalStatusBadge, {
                       backgroundColor: voucher.Status === "Claimed" ? "#4CAF50" : "#FF9800"
-                    }]}> <Text style={styles.modalStatusText}>{voucher.Status}</Text></View>
+                    }]}>
+                      <Text style={styles.modalStatusText}>{voucher.Status}</Text>
+                    </View>
                   </View>
 
                   <View style={styles.voucherWrapper}>
@@ -191,11 +197,11 @@ const List = () => {
                       <View style={styles.qrCodeBox}>
                         <QRCode value={qrData} size={58} />
                       </View>
-                      <Text style={styles.percentageText}>{voucher.Discount}% OFF</Text>
+                      <Text style={styles.percentageText}>{`${voucher.Discount}% OFF`}</Text>
                       <Text style={styles.voucherCodeTop}>{String(selectedVoucher.EventID ?? "")}</Text>
                     </ImageBackground>
                   </View>
-                </>
+                </View>
               );
             })()}
             <TouchableOpacity style={styles.closeButton} onPress={closeQrModal}>
@@ -209,6 +215,7 @@ const List = () => {
 };
 
 const { width, height } = Dimensions.get("window");
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F8F8" },
