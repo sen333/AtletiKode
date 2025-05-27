@@ -25,12 +25,12 @@ SplashScreen.preventAutoHideAsync();
 
 const EventCard = ({ event, onDelete }: { event: { id: string; title: string; totalVouchers: number }; onDelete: (event: { id: string; title: string; totalVouchers: number }) => void }) => (
   <View style={styles.card}>
-    <View>
+    <View style={styles.leftSection}>
       <Text style={styles.eventCode}>{event.id}</Text>
       <Text style={styles.eventTitle}>{event.title}</Text>
     </View>
     <View style={styles.rightSection}>
-      <View>
+      <View style={styles.voucherInfo}>
         <Text style={styles.voucherCount}>{event.totalVouchers}</Text>
         <Text style={styles.voucherLabel}>Released Vouchers</Text>
       </View>
@@ -392,44 +392,49 @@ const styles = StyleSheet.create({
     color: "#13390B",
     fontFamily: "Manrope_700Bold",
   },
+ leftSection: {
+    flex: 1,
+  },
   rightSection: {
-    flexDirection: "row",
-    alignItems: "center",
+    alignItems: 'center',
     marginRight: 10,
+    minWidth: 100, // Adjust this value as needed
+  },
+  voucherInfo: {
+    alignItems: 'center',
   },
   voucherCount: {
     fontSize: width * 0.05,
     fontWeight: "bold",
     color: "#13390B",
     textAlign: "center",
+    fontFamily: "Manrope_700Bold",
   },
   voucherLabel: {
     fontSize: width * 0.025,
     color: "#13390B",
-    textAlign: "right",
+    textAlign: "center",
+    fontFamily: "Manrope_400Regular",
   },
   trashIcon: {
     marginLeft: 10,
   },
-  floatingAddButton: {
+floatingAddButton: {
     position: "absolute",
-    bottom: 30,
-    right: 30,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#13390B",
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#63120E",
     justifyContent: "center",
     alignItems: "center",
-    elevation: 8,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-  },
+    shadowRadius: 3,
+    elevation: 5,
+},
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",

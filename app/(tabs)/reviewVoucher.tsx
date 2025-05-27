@@ -27,30 +27,30 @@ const ReviewVoucher = () => {
     }
   }, [fontsLoaded])
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    
     setIsSubmitting(true)
     try {
       console.log("Starting voucher creation process...")
 
-      // Step 1: Check if customer exists, if not create a new one
+      // Step 1: Check if customer exists with better error handling
       const { data: existingCustomers, error: customerCheckError } = await supabase
         .from("Customers")
         .select("id")
         .eq("Email", voucherData.email)
-        .limit(1)
+        .single() // Use single() instead of limit(1)
 
-      if (customerCheckError) {
+      if (customerCheckError && customerCheckError.code !== 'PGRST116') {
         console.error("Customer check error:", customerCheckError)
         throw customerCheckError
       }
 
-      let customerId
+      let customerId = existingCustomers?.id
 
-      if (existingCustomers && existingCustomers.length > 0) {
-        customerId = existingCustomers[0].id
-        console.log("Found existing customer:", customerId)
-      } else {
-        // Create new customer
+      if (!customerId) {
+        // Create new customer only if not exists
         const { data: newCustomer, error: createCustomerError } = await supabase
           .from("Customers")
           .insert([
@@ -62,13 +62,13 @@ const ReviewVoucher = () => {
             },
           ])
           .select()
+          .single()
 
         if (createCustomerError) {
           console.error("Customer creation error:", createCustomerError)
           throw createCustomerError
         }
-        customerId = newCustomer[0].id
-        console.log("Created new customer:", customerId)
+        customerId = newCustomer.id
       }
 
       // Step 2: Create a new voucher
@@ -192,10 +192,11 @@ const ReviewVoucher = () => {
       })
     } catch (error) {
       console.error("Error submitting voucher:", error)
-      setIsSubmitting(false)
       Alert.alert("Error", `Failed to create voucher: ${error.message}`)
+    } finally {
+      setIsSubmitting(false) 
     }
-  }
+}
 
   const handleEditDetails = () => {
     // Navigate back to the addVoucher screen with the current data

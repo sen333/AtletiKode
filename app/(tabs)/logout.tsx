@@ -13,8 +13,11 @@ const Logout = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      // Show the confirmation modal whenever the page gains focus
-      setModalVisible(true);
+    const timer = setTimeout(() => {
+        setModalVisible(true);
+      }, 600);
+
+      return () => clearTimeout(timer);
     }, [])
   );
 
