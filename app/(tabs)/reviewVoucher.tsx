@@ -20,7 +20,6 @@ const ReviewVoucher = () => {
   const route = useRoute()
   const { voucherData } = route.params
   const [isSubmitting, setIsSubmitting] = useState(false)
-
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync()
